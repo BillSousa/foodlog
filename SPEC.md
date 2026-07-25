@@ -9,6 +9,7 @@ and food costs, including:
 - Money spent on groceries
 - Per-item nutrition and cost data on every purchase
 - Running lifetime "servings consumed" totals per item
+
 Food log also allows users to:
 - Do pre-purchase "sandbox engineering" of orders to hit nutrition/cost targets
 - Do post-purchase reconciliation of actual goods in-hand and prices paid
@@ -182,7 +183,7 @@ analysis via simple interfaces and a turnkey data storage mechanism.
   micrograms uniformly (mg-based ones like Calcium get ×1000'd on entry) for
   apples-to-apples consistency.
 - **`glycemic_index` is the one nutrition-adjacent field that IS nullable**
-- (no default). Rationale: it's not additive/summable across an order the way
+  (no default). Rationale: it's not additive/summable across an order the way
   macros are, so 0 would be misleading (implies "no impact" rather than
   "unknown"). Expected range 0–200, validated at the application layer only
   (SQLite doesn't enforce numeric ranges) — low-stakes, self-correcting if
@@ -385,10 +386,11 @@ The steps, in order:
    the same underlying mechanism as the "Manage Categories" screen, or skip
    entirely and leave `dim_categories` empty for now.
 4. **Cal/Day Target** — sets `settings.cal_per_day_target`, pre-filled with
-   a default of **2000**, which the user may override. (Not skippable in
+   a default of **2000**, which the user may override. Not skippable in
    the sense of being blank — it always has a value — but the default is
    sensible enough that the user can simply click through without typing
-   anything if they don't care to change it.)
+   anything if they don't care to change it. Cannot be blank, cannot be 
+   negative, cannot be zero. User must enter a postive definite float/int.
 5. **Populate Items (optional, final step)** — offers a choice: "Start
    Entering Items" or "Skip." Choosing "Start Entering Items" exits the
    wizard directly into the Manage Items screen (create-new-item form).
@@ -544,18 +546,20 @@ clear that category off every item using it before the category itself can
 be deleted. No silent orphaning, no automatic reassignment.
 
 ### Manage Tracked Nutrients
-See §7. Read-only nutrient name list (from `ref_daily_values`) with an
-editable tracked/untracked checkbox per row.
+See §7. Editable nutrient name list (from `ref_daily_values`), editable daily 
+value (mcg) fields, with an editable tracked/untracked checkbox per row.
 
 ### Settings
 Not laid out in pixel-level detail (left to iteration with Claude Code), but
-must include: an editable `cal_per_day_target` value, and a hidden/buried
-control (e.g. under a "Danger Zone" label) requiring a typed confirmation
-phrase (not just a click) to fully wipe `dim_items`, `fact_orders`,
-`fact_order_lines`, `fact_consumption`, `dim_product_names`, and
-`dim_categories` for the current project file. This reset does NOT wipe
-`ref_daily_values` (holds FDA reference defaults — nutrient names, daily
-values, tracked flags — which should survive a reset) or `settings` itself.
+must include: an editable `cal_per_day_target` value that has a system default 
+value of 2000, and a hidden/buried reset button (e.g. under a "Danger Zone" 
+label) requiring a typed confirmation phrase (not just a click) to fully reset 
+the FoodLog program. Resetting the program deletes all entries from the 
+`dim_items`, `fact_orders`, `fact_order_lines`, `fact_consumption`, 
+`dim_product_names`, and `dim_categories` tables, and resets the `cal_per_day_target` 
+to the system default. This reset does NOT change editable fields in 
+`ref_daily_values`, which hold FDA reference defaults — nutrient names, daily 
+values — which should survive a reset.
 
 ### Reporting
 Deliberately NOT specified beyond the mechanism decision (§3: matplotlib

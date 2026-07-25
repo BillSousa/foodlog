@@ -2,7 +2,7 @@
 
 **Read `SPEC.md` in full before doing any work on this project.** It contains
 the complete, deliberated product specification — database schema, business
-rules, packaging strategy, and GUI/screen inventory. It reflects roughly 20
+rules, packaging strategy, and GUI/screen inventory. It reflects roughly 40
 hours of design discussion and should be treated as authoritative for
 anything it covers.
 
