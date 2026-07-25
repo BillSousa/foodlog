@@ -368,7 +368,7 @@ generic Settings screen.
 A multi-step, installer-style flow shown on first launch of a new project
 (i.e. against a fresh, empty `foodlog.db`). It runs exactly once per
 project file and does not reappear on subsequent launches once completed.
-See `/gui/setup_wizard.md` for the full ASCII mockup of every step.
+See @/gui/setup_wizard1.md for the full ASCII mockup of every step.
 
 Only the Nutrient Tracking step is mandatory — every other step can be
 skipped and revisited later via the corresponding screen on the Main GUI.
