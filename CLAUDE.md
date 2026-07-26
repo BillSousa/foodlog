@@ -44,6 +44,12 @@ folder with a settings.json file in it.
 - Max line length: 79 characters.
 - Use f-strings, not `.format()` or `%`.
 - Prefer `pathlib.Path` over `os.path`.
+- When creating supporting classes and functions, put only one function or 
+class in a file. Do not put multiple classes and/or functions in a single file.
+- Only use pytest for testing. All tests go in the /tests folder at the project 
+root.
+- Create a test file with thorough tests for every py file that you create. 
+This means all functional script as wells supporting classes and functions.
 
 ## Environment
 - Package manager: `uv` with `pyproject.toml`.
@@ -55,6 +61,12 @@ folder with a settings.json file in it.
 ## Git
 - Never commit: `.venv/`, `__pycache__/`, `.env`, `*.pyc`
 - Never push directly to main
+- When writing commit messages, start the message with the date and time, 
+using "YY_MM_DD_hh_mm_ss" format, e.g, "26_07_26_15_58_00 first commit". 
+- Do NOT use emojis in commit messages.
+- Only create commits if the human gives you explicit permission.
+- Only push commits to the remote repo if the human gives you explicit 
+permission.
 
 ## Maintaining CLAUDE.md (this document)
 Change rules for CLAUDE.md --- Do not modify CLAUDE.md unless you have 
