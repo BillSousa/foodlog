@@ -3,3 +3,4 @@ foodlog.db
 __pycache__/
 .env
 *.pyc
+.idea/

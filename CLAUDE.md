@@ -26,8 +26,9 @@ Do not read entire files unless necessary — read only relevant sections.
 Do not repeat back large chunks of code unless asked.
 Keep responses concise — Be non-verbose and do not use lengthy preambles 
 or summaries.
-Go step-by-step to solve problems. Do not return long, multi-step procedures 
-to the human.
+Present suggestions one step at a time when recommending action plans to the 
+human while helping to troubleshoot problems. Do not return long, multi-step 
+procedures to the human.
 
 ## Claude Code Config
 - Do not use /home for project-level configurations, only use /home for 
@@ -48,6 +49,9 @@ folder with a settings.json file in it.
 class in a file. Do not put multiple classes and/or functions in a single file.
 - Only use pytest for testing. All tests go in the /tests folder at the project 
 root.
+- Mirror the `src/` folder structure inside `/tests` — a test file's location 
+should match the source file it tests (e.g. `src/foodlog/orders/create_order.py` → 
+`tests/orders/test_create_order.py`).
 - Create a test file with thorough tests for every py file that you create. 
 This means all functional script as wells supporting classes and functions.
 
@@ -67,6 +71,26 @@ using "YY_MM_DD_hh_mm_ss" format, e.g, "26_07_26_15_58_00 first commit".
 - Only create commits if the human gives you explicit permission.
 - Only push commits to the remote repo if the human gives you explicit 
 permission.
+
+## Project change policy
+If a program file does not exist and you need to create it, first get 
+approval from the human, then create the file and write the code. But if a 
+program file already exists and you need to edit it, follow this procedure:
+- Present your desired changes to the human for approval. When presenting 
+your changes, if you are deleting information, present what is being 
+deleted. If you are adding information, present what you are adding. If 
+you are editing information, present both the original text and the edited 
+text to the human.
+- If you have received approval from the human, create a backup copy of the 
+file to be edited before modifying the original file. Give the backup an 
+intuitive name, e.g., if the file is named "_validation", then call the 
+copy "_validation_backup".
+- Make the required edits to the original file, not the copy.
+- Inform the human that the changes are finished.
+Adherence to this policy is subject to the human's discretion. The human 
+may, from time to time, at his discretion, give you permission to bypass 
+these change policies completely and/or give you permission to make edits 
+without making a copy first.
 
 ## Maintaining CLAUDE.md (this document)
 Change rules for CLAUDE.md --- Do not modify CLAUDE.md unless you have 
