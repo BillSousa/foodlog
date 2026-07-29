@@ -45,12 +45,29 @@ class OrderCreationWindow(tk.Toplevel):
         self.items_frame = tk.Frame(grid_frame)
         self.items_frame.pack(fill=tk.BOTH, expand=True)
 
+        btn_row = tk.Frame(self)
+        btn_row.pack(pady=5)
+
         add_btn = tk.Button(
-            self,
+            btn_row,
             text="Add Item to Order",
             command=self._show_item_picker
         )
-        add_btn.pack(pady=5)
+        add_btn.pack(side=tk.LEFT, padx=5)
+
+        summary_btn = tk.Button(
+            btn_row,
+            text="View Order Summary $",
+            command=self._view_money_summary
+        )
+        summary_btn.pack(side=tk.LEFT, padx=5)
+
+        nutrition_btn = tk.Button(
+            btn_row,
+            text="View Nutrition",
+            command=self._view_nutrition_summary
+        )
+        nutrition_btn.pack(side=tk.LEFT, padx=5)
 
         self.totals = OrderTotals(self, cal_target)
         self.totals.get_frame().pack(fill=tk.X, padx=10, pady=10)
@@ -128,6 +145,24 @@ class OrderCreationWindow(tk.Toplevel):
         self.totals.update(
             total_cost, total_calories, total_protein, total_sodium, 0, 0
         )
+
+    def _view_money_summary(self) -> None:
+        """View order summary (money) pop-out."""
+        if not self.order_id:
+            messagebox.showwarning("Save first", "Save order before viewing summary")
+            return
+
+        from src.gui.windows.order_summary_window import OrderSummaryWindow
+        OrderSummaryWindow(self, self.order_id)
+
+    def _view_nutrition_summary(self) -> None:
+        """View nutrition summary pop-out."""
+        if not self.order_id:
+            messagebox.showwarning("Save first", "Save order before viewing summary")
+            return
+
+        from src.gui.windows.nutrition_summary_window import NutritionSummaryWindow
+        NutritionSummaryWindow(self, self.order_id)
 
     def _save(self) -> None:
         """Save order as draft with line items."""
