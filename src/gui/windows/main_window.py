@@ -52,7 +52,8 @@ class MainWindow(tk.Tk):
 
     def _on_consumption(self) -> None:
         """Open consumption logging screen."""
-        tk.messagebox.showinfo("TODO", "Consumption screen (Phase 10)")
+        from src.gui.windows.consumption_window import ConsumptionWindow
+        ConsumptionWindow(self)
 
     def _on_items(self) -> None:
         """Open item management screen."""
