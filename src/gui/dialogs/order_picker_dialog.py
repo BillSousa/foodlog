@@ -74,7 +74,8 @@ class OrderPickerDialog(tk.Toplevel):
 
     def _on_create_new(self) -> None:
         """Create new order."""
-        messagebox.showinfo("TODO", "Order creation (Phase 8)")
+        from src.gui.windows.order_creation_window import OrderCreationWindow
+        OrderCreationWindow(self)
         self.destroy()
 
     def _on_open(self) -> None:
