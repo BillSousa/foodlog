@@ -16,8 +16,9 @@ def main() -> None:
     if is_first_run():
         from src.gui.windows.setup_wizard_window import launch_setup_wizard
         launch_setup_wizard()
-    else:
-        print("Welcome back! Opening main GUI (Phase 6).")
+
+    from src.gui.windows.main_window import launch_main_gui
+    launch_main_gui()
 
 
 if __name__ == "__main__":
