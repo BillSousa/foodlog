@@ -14,9 +14,10 @@ def main() -> None:
     initialize_defaults()
 
     if is_first_run():
-        print("First run detected. Setup Wizard will launch.")
+        from src.gui.windows.setup_wizard_window import launch_setup_wizard
+        launch_setup_wizard()
     else:
-        print("Welcome back! Opening main GUI.")
+        print("Welcome back! Opening main GUI (Phase 6).")
 
 
 if __name__ == "__main__":
