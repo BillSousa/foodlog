@@ -77,7 +77,8 @@ class MainWindow(tk.Tk):
 
     def _on_reporting(self) -> None:
         """Open reporting/analytics."""
-        tk.messagebox.showinfo("TODO", "Reporting screen (Phase 12)")
+        from src.gui.windows.reporting_window import ReportingWindow
+        ReportingWindow(self)
 
     def _on_settings(self) -> None:
         """Open settings."""
