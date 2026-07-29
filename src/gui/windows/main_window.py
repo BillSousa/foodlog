@@ -56,7 +56,8 @@ class MainWindow(tk.Tk):
 
     def _on_items(self) -> None:
         """Open item management screen."""
-        tk.messagebox.showinfo("TODO", "Item management screen (Phase 7)")
+        from src.gui.windows.item_management_window import ItemManagementWindow
+        ItemManagementWindow(self)
 
     def _on_product_names(self) -> None:
         """Open product names editor."""
