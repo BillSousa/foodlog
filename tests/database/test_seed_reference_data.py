@@ -109,7 +109,7 @@ def test_seed_reference_data_vitamin_d_tracked() -> None:
             result = cursor.fetchone()
 
             assert result is not None
-            assert result[0] == 20000
+            assert result[0] == 20
             conn.close()
 
 

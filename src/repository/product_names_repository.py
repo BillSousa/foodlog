@@ -18,6 +18,16 @@ class ProductNamesRepository:
         conn.close()
         return name_id
 
+    def get_product_name(self, name_id: int) -> ProductName | None:
+        """Get single product name by ID."""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM dim_product_names WHERE name_id = ?',
+                       (name_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return ProductName(**dict(row)) if row else None
+
     def list_product_names(self) -> list[ProductName]:
         """Get all product names."""
         conn = get_connection()
@@ -26,3 +36,14 @@ class ProductNamesRepository:
         names = [ProductName(**dict(row)) for row in cursor.fetchall()]
         conn.close()
         return names
+
+    def update_product_name(self, name_id: int, name_text: str) -> None:
+        """Update product name text."""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'UPDATE dim_product_names SET name_text = ? WHERE name_id = ?',
+            (name_text, name_id)
+        )
+        conn.commit()
+        conn.close()

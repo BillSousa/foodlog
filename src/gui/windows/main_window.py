@@ -62,15 +62,18 @@ class MainWindow(tk.Tk):
 
     def _on_product_names(self) -> None:
         """Open product names editor."""
-        tk.messagebox.showinfo("TODO", "Product names screen (Phase 11)")
+        from src.gui.windows.product_names_window import ProductNamesWindow
+        ProductNamesWindow(self)
 
     def _on_categories(self) -> None:
         """Open category manager."""
-        tk.messagebox.showinfo("TODO", "Categories screen (Phase 11)")
+        from src.gui.windows.categories_window import CategoriesWindow
+        CategoriesWindow(self)
 
     def _on_nutrients(self) -> None:
         """Open nutrient tracking manager."""
-        tk.messagebox.showinfo("TODO", "Nutrients screen (Phase 11)")
+        from src.gui.windows.nutrients_window import NutrientsWindow
+        NutrientsWindow(self)
 
     def _on_reporting(self) -> None:
         """Open reporting/analytics."""
@@ -78,7 +81,8 @@ class MainWindow(tk.Tk):
 
     def _on_settings(self) -> None:
         """Open settings."""
-        tk.messagebox.showinfo("TODO", "Settings screen (Phase 11)")
+        from src.gui.windows.settings_window import SettingsWindow
+        SettingsWindow(self)
 
 
 def launch_main_gui() -> None:
