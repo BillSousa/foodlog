@@ -2,6 +2,10 @@ import tkinter as tk
 import tkinter.ttk
 from tkinter import messagebox
 
+from src.conversion.nutrition_converter import (
+    convert_nutrition_for_storage,
+    get_column_name,
+)
 from src.gui.components.nutrition_panel import NutritionPanel
 from src.models.dim_items import Item
 from src.models.dim_product_names import ProductName
@@ -160,8 +164,13 @@ class ItemFormDialog(tk.Toplevel):
             )
 
             nutrition = self.nutrition_panel.get_values()
-            for key, value in nutrition.items():
-                setattr(item, key, value)
+            for nutrient_name, user_value in nutrition.items():
+                column_name = get_column_name(nutrient_name)
+                if column_name:
+                    converted_value = convert_nutrition_for_storage(
+                        nutrient_name, user_value
+                    )
+                    setattr(item, column_name, converted_value)
 
             repo = ItemsRepository()
             if self.item_id:

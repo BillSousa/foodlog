@@ -1,6 +1,7 @@
 import tkinter as tk
 
 from src.database.seed_reference_data import NUTRIENTS
+from src.nutrients.metadata import get_nutrient_unit
 from src.repository.tracked_nutrients_repository import (
     TrackedNutrientsRepository,
 )
@@ -52,14 +53,15 @@ class NutritionPanel:
         canvas.create_window((0, 0), window=scrollable, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        for name, unit, dv, _ in NUTRIENTS:
+        for name, unit, dv, _, _ in NUTRIENTS:
             if name not in tracked:
                 continue
 
             row = tk.Frame(scrollable)
             row.pack(fill=tk.X, padx=5, pady=2)
 
-            label = tk.Label(row, text=f"{name} ({unit}):", width=25)
+            display_unit = get_nutrient_unit(name)
+            label = tk.Label(row, text=f"{name} ({display_unit}):", width=25)
             label.pack(side=tk.LEFT)
 
             entry = tk.Entry(row, width=10)

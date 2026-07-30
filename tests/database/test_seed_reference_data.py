@@ -51,14 +51,15 @@ def test_seed_reference_data_is_idempotent() -> None:
 
 
 def test_nutrients_have_units() -> None:
-    """Test NUTRIENTS list has units for each nutrient."""
+    """Test NUTRIENTS list has units and %DV flag for each nutrient."""
     for nutrient in NUTRIENTS:
-        assert len(nutrient) == 4
-        name, unit, dv, tracked = nutrient
+        assert len(nutrient) == 5
+        name, unit, dv, tracked, is_dv_percent = nutrient
         assert isinstance(name, str) and name
         assert isinstance(unit, str) and unit
         assert isinstance(dv, (int, float))
         assert isinstance(tracked, int) and tracked in (0, 1)
+        assert isinstance(is_dv_percent, bool)
 
 
 def test_seed_reference_data_calories_tracked() -> None:
