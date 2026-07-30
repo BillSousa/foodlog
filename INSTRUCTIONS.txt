@@ -1,0 +1,351 @@
+================================================================================
+                              FOODLOG USER GUIDE
+================================================================================
+
+Welcome to FoodLog! This guide will help you get up and running.
+
+================================================================================
+WHAT IS FOODLOG?
+================================================================================
+
+FoodLog is a desktop application that helps you track:
+  • Food purchases and costs
+  • Nutrition information (calories, macros, vitamins, minerals, etc.)
+  • Food consumption to monitor on-hand inventory
+  • Cost-to-nutrition ratios to engineer better shopping decisions
+
+All data is stored locally in a single database file (foodlog.db) that lives
+in the same folder as the program. Nothing goes to the cloud—your data stays
+on your computer.
+
+================================================================================
+QUICK START
+================================================================================
+
+Windows:
+  1. Double-click foodlog_win.exe
+  2. Follow the Setup Wizard on first launch
+  3. You're ready to start logging food!
+
+Linux:
+  1. Open a terminal
+  2. Navigate to the FoodLog folder
+  3. Run: ./foodlog_linux
+  4. Follow the Setup Wizard on first launch
+
+macOS:
+  FoodLog does not currently support macOS. You can run it on Windows or Linux.
+
+================================================================================
+FIRST-RUN SETUP WIZARD
+================================================================================
+
+On your first launch, FoodLog shows a 5-step Setup Wizard:
+
+1. WELCOME
+   A brief orientation explaining what the wizard covers.
+
+2. NUTRIENT TRACKING (REQUIRED)
+   Choose which nutrients you want to track. You see:
+   - A checkbox list of nutrients (Calories, Sodium, Vitamin D, etc.)
+   - A "Track All Vitamins" master toggle for convenience
+
+   You can always change these choices later via Settings → Manage Tracked
+   Nutrients. Even if you uncheck everything, FoodLog still logs what you buy
+   and consume—these checkboxes just control what nutrition data you see in
+   reports.
+
+3. CATEGORIES (OPTIONAL)
+   Create categories to organize your food items (e.g., "Grains", "Proteins",
+   "Dairy"). You can skip this and add categories later, or leave it empty
+   entirely (items don't require a category).
+
+4. DAILY CALORIE TARGET (DEFAULTS TO 2000)
+   Enter your personal daily calorie goal. This is used to estimate how many
+   days of food a given order will cover. You can change this anytime via
+   Settings.
+
+5. POPULATE ITEMS (OPTIONAL)
+   Offers two choices:
+   - "Start Entering Items" → jumps directly into creating your first food item
+   - "Skip" → takes you to the main screen
+
+   Either choice ends the wizard. You can add items anytime later.
+
+================================================================================
+MAIN SCREEN & NAVIGATION
+================================================================================
+
+Once the wizard completes, you'll see the main FoodLog home screen with
+buttons for:
+
+  NEW / MANAGE ORDERS
+    Create orders (shopping trips) or reopen existing ones to view/edit
+    details, adjust quantities, and reconcile against receipts.
+
+  LOG CONSUMPTION
+    Record what you've eaten or used. FoodLog ensures you can't log more
+    than you have on hand (hard block—a safety feature).
+
+  MANAGE ITEMS
+    Create new food items and edit existing ones. You'll enter nutrition
+    data here (pulling straight from the label). FoodLog stores this data
+    once, and you reuse it across orders.
+
+  EDIT PRODUCT NAMES
+    Fix typos in product names without creating a whole new item version.
+    Useful when you spot a misspelling.
+
+  MANAGE CATEGORIES
+    Create, rename, or delete categories. If a category is in use (assigned
+    to items), you must reassign those items before deleting the category.
+
+  MANAGE TRACKED NUTRIENTS
+    Toggle which nutrients you want to see in reports and data-entry forms.
+    This is the same screen you see in the Setup Wizard—you can revisit it
+    anytime.
+
+  SETTINGS
+    Change your daily calorie target, and access a "Danger Zone" reset
+    button (requires a confirmation phrase to prevent accidents).
+
+  REPORTING
+    View charts and export data to analyze your nutrition and spending.
+
+================================================================================
+HOW TO USE FOODLOG: TYPICAL WORKFLOW
+================================================================================
+
+STEP 1: CREATE AN ITEM (Do this once per product)
+  1. Click "Manage Items"
+  2. Click "Create New Item"
+  3. Enter the product name and nutrition information from the label
+  4. Save
+
+  FoodLog remembers this item forever. Next time you buy it, you just
+  select it from a list instead of re-entering the data.
+
+STEP 2: CREATE AN ORDER (Shopping trip, order, etc.)
+  1. Click "New / Manage Orders"
+  2. Click "Create New Order"
+  3. Set the order date and whether it's a delivery
+  4. Search for and add items
+  5. For each item, enter the quantity ("blocks") or servings
+  6. Adjust price, add any sales/discounts/coupons if you know them upfront
+  7. Click "Save Draft" to save the order
+
+  You can reopen and edit orders anytime until you mark them as "reconciled".
+
+STEP 3: RECONCILE THE ORDER (After delivery / purchase)
+  1. Click "New / Manage Orders" and find your order
+  2. Adjust "actual servings" for any items that came in short or extra
+  3. Update prices/discounts if the invoice shows different numbers
+  4. Click "View Order Summary" to double-check the total against your receipt
+  5. When everything matches, change the status to "reconciled"
+
+  A reconciled order is soft-locked to prevent accidental changes. You can
+  edit it again if needed by changing the status back.
+
+STEP 4: LOG CONSUMPTION (As you use the food)
+  1. Click "Log Consumption"
+  2. Select items you've used/eaten (sorted by on-hand quantity)
+  3. Enter how much you consumed
+  4. FoodLog blocks you if you try to consume more than you have
+
+STEP 5: VIEW REPORTS (Anytime)
+  1. Click "Reporting"
+  2. Pick a date range and chart type
+  3. Analyze your spending and nutrition
+
+================================================================================
+KEY CONCEPTS
+================================================================================
+
+ON-HAND INVENTORY
+  FoodLog automatically calculates how much of each item you have left:
+    on_hand = (total ordered) − (total consumed)
+
+  When you log consumption, it subtracts from this total. FoodLog prevents
+  you from logging more than you have.
+
+SERVINGS VS. BLOCKS
+  - "Servings" = the nutrition label's serving size (e.g., 30g, 1 cup)
+  - "Blocks" = the package size (e.g., 1 box, 1 container)
+
+  When you add an item to an order, you can enter either. FoodLog converts
+  between them automatically using the ratio you enter when creating the item.
+
+PRICE SNAPSHOT
+  When you add an item to an order, FoodLog locks in that day's price
+  ("stated price"). If you later edit the item's price in Manage Items, it
+  does NOT change the price on that order—only future orders use the new
+  price. This preserves historical accuracy.
+
+NUTRITION DATA ENTRY
+  When creating an item, FoodLog shows nutrition fields with units:
+    - Fields like "Sodium" show "%" because FDA labels show sodium as a
+      percentage of daily value
+    - Fields like "Total Fat" show "g" because FDA labels show grams
+
+  FoodLog converts everything internally to a common unit (micrograms) so
+  the math works correctly even if FDA daily value guidelines change.
+
+CATEGORIES & ITEM VERSIONS
+  - If you rename a product name, it updates everywhere (no new version)
+  - If nutrition info changes (e.g., manufacturer reformulated), FoodLog
+    creates a new item version with a new ID. Old orders still reference
+    the old version; new orders use the new one. Both are valid.
+  - If you retire an item, mark it inactive to hide it from new orders
+    (old orders still see it).
+
+================================================================================
+IMPORTANT: DATA STORAGE & BACKUP
+================================================================================
+
+YOUR DATA
+  All FoodLog data lives in a single file: foodlog.db
+  This file is in the same folder as the program executable.
+
+  There is NO cloud backup. Everything is local to your machine.
+
+BACKUP YOUR DATA
+  Regularly copy foodlog.db to a safe location:
+  - External hard drive
+  - USB flash drive
+  - Cloud storage (Google Drive, Dropbox, OneDrive, etc.)
+
+  If your computer fails, foodlog.db is all you need to recover your data.
+
+MOVING OR COPYING THE PROGRAM
+  The entire FoodLog folder is self-contained:
+
+    FoodLog/
+      ├── foodlog_win.exe (or foodlog_linux on Linux)
+      ├── foodlog.db
+      └── (other files)
+
+  You can:
+  - Copy the entire folder to a different computer
+  - Move it to a different location on the same computer
+  - Put it on a shared drive or USB stick
+  - Run it from multiple machines (but NOT simultaneously on the same
+    foodlog.db—that causes conflicts)
+
+  The program always finds foodlog.db relative to itself, so paths don't
+  break when you move things around.
+
+MULTIPLE PROJECTS
+  To maintain separate FoodLog databases (e.g., one for personal use, one
+  for a household):
+
+  1. Copy the entire FoodLog folder
+  2. Rename the copy (e.g., "FoodLog_Household")
+  3. Run the copy—it creates a fresh database and starts a new project
+
+  Now you have two independent databases that don't interfere with each
+  other.
+
+================================================================================
+RESET / DANGER ZONE
+================================================================================
+
+If you want to start over with a blank database:
+
+  1. Click Settings
+  2. Scroll down to "Danger Zone"
+  3. Click the reset button
+  4. Type the confirmation phrase (you'll see the phrase on screen)
+  5. Confirm
+
+  This deletes all items, orders, and consumption data, but preserves your
+  nutrient tracking preferences and FDA reference data. foodlog.db is reset
+  to a clean slate.
+
+  There is no undo. Make sure you have a backup first if you might want to
+  recover this data.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+"The program won't start"
+  - Make sure you have a working Python 3 installation (Linux only—Windows
+    version is self-contained).
+  - Check that foodlog.db is not being accessed by another program.
+  - Try closing and reopening the program.
+
+"I can't log more consumption than I have on hand"
+  This is intentional—FoodLog blocks you to prevent inventory errors. If
+  the on-hand amount is wrong, review your orders and check that you've
+  reconciled them correctly (actual servings should match what arrived).
+
+"I want to edit an order, but it's locked"
+  Orders are locked when their status is "reconciled". Change the status
+  back to "planning" or "delivered" to edit, then change it back to
+  "reconciled" when done.
+
+"I changed an item's nutrition data, but my old orders didn't update"
+  This is correct behavior—old orders keep their original nutrition snapshot.
+  New orders use the updated data. FoodLog maintains historical accuracy this
+  way.
+
+"My data is gone!"
+  Check if foodlog.db still exists in the FoodLog folder. If it does, try
+  restarting the program. If it doesn't, check your trash/recycle bin. If
+  you have a backup, restore it. If not, unfortunately the data is lost.
+  This is why regular backups are important.
+
+"I see a bug or the program crashed"
+  Note the error message (screenshot if possible) and the steps that led to
+  it. If you're technical, check the console output. Report issues at:
+  https://github.com/BillSousa/foodlog/issues
+  (or wherever this project is hosted)
+
+================================================================================
+TIPS & BEST PRACTICES
+================================================================================
+
+1. DO CREATE ITEMS CAREFULLY
+   Nutrition data entry is the foundation. Double-check the numbers from
+   the label when you create an item—the more accurate the better.
+
+2. RECONCILE ORDERS SOON
+   Update actual quantities and prices right after you get home, while
+   you have the receipt in hand. Waiting makes it harder to remember.
+
+3. USE CATEGORIES
+   Even a few broad categories (Proteins, Grains, Produce) make reports
+   much more useful than a flat list.
+
+4. BACKUP REGULARLY
+   Weekly or monthly, depending on how much you use FoodLog. A 5-second
+   copy takes you from "lost forever" to "recovered in minutes".
+
+5. START SMALL
+   You don't have to enter every nutrient. Pick what matters to you
+   (maybe just calories and cost?) and skip the rest. You can always
+   add more tracking later.
+
+6. USE THE ORDER SUMMARY & NUTRITION WINDOWS
+   Before finalizing an order, click "View Order Summary $" to double-check
+   the total against your receipt. Click "View Nutrition" to see the
+   estimated calories and macros.
+
+================================================================================
+GETTING HELP
+================================================================================
+
+This guide covers the basics. For more details or to report bugs:
+
+  Project Repository:
+  https://github.com/BillSousa/foodlog
+  (Check the README and SPEC.md for advanced topics)
+
+  Contact:
+  wksjr99@gmail.com
+
+================================================================================
+
+Happy tracking! 🍎
+
+================================================================================
