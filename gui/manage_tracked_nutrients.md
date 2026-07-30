@@ -8,37 +8,41 @@ anytime (e.g. dropping a nutrient a year later after noticing it's always
 zero).
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  MANAGE TRACKED NUTRIENTS                                   │
-├──────────────────────────────────────────────────────────┤
-│  [ ] Track All Vitamins/Minerals (master toggle)             │
-├──────────────────────────────────────────────────────────┤
-│  NUTRIENT NAME              DAILY VALUE (mcg)   TRACKED     │
-│  ────────────────────────────────────────────────────────   │
-│  [Calories                ]  (n/a)               [X]         │
-│  [Total Fat               ]  (n/a)               [X]         │
-│  [Sodium                  ]  (n/a)               [X]         │
-│  [Vitamin D               ]  [20      ]          [X]         │
-│  [Vitamin A               ]  [900000  ]          [ ]         │
-│  [Folate                  ]  [400     ]          [ ]         │
-│  [Biotin                  ]  [30      ]          [ ]         │
-│  ...  (scrollable, ~35 rows total)                            │
-├──────────────────────────────────────────────────────────┤
-│                          [ Save Changes ]                    │
-└──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│  MANAGE TRACKED NUTRIENTS                                        │
+├────────────────────────────────────────────────────────────────┤
+│  [ ] Track All Vitamins/Minerals (master toggle)                 │
+├────────────────────────────────────────────────────────────────┤
+│  NUTRIENT NAME          DAILY VALUE    UNITS    TRACKED          │
+│  ──────────────────────────────────────────────────────────────  │
+│  [Calories            ]  (n/a)         kcal      [X]             │
+│  [Total Fat           ]  (n/a)         g         [X]             │
+│  [Sodium              ]  (n/a)         mcg       [X]             │
+│  [Vitamin D           ]  [20      ]    mcg       [X]             │
+│  [Vitamin A           ]  [900000  ]    mcg       [ ]             │
+│  [Folate              ]  [400     ]    mcg       [ ]             │
+│  [Biotin              ]  [30      ]    mcg       [ ]             │
+│  ...  (scrollable, ~35 rows total)                                │
+├────────────────────────────────────────────────────────────────┤
+│                             [ Save Changes ]                      │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 Notes:
-- `nutrient_name` and `dv_amount_mcg` are directly editable inline (text
+- `nutrient_name` and `dv_amount` are directly editable inline (text
   boxes), alongside the `is_tracked` checkbox, matching what SPEC.md §6 
   already declares editable for `ref_daily_values`.
 - `nutrient_name` edits are expected to be extremely rare (the FDA
   renaming a nutrient) — SCD-style rationale: editable in place because 
   the underlying identity (`nutrient_id`) doesn't change, just the label.
-- `dv_amount_mcg` edits are similarly rare (the FDA revising a daily
+- `dv_amount` edits are similarly rare (the FDA revising a daily
   value) but the mechanism is the same simple inline edit — no history is
   kept on this table; it's a small reference table the user can correct
   directly if the FDA changes a number.
+- **UNITS column** is read-only and displays the unit of measurement for
+  that nutrient (e.g., "g", "mcg", "kcal"). This is derived from the
+  internal NUTRIENTS reference list and is for display/clarity only — it
+  is not stored in `ref_daily_values`.
 - Nutrients without a meaningful daily-value percentage (calories, macros
   given directly in grams on labels) show "(n/a)" in the Daily Value
   column since they aren't %DV-converted, and have no edit box there.

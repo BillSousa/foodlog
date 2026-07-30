@@ -178,7 +178,7 @@ analysis via simple interfaces and a turnkey data storage mechanism.
   FDA's daily value figures can change over time (as they did in 2016),
   which would silently invalidate historically-stored percentages. The GUI
   lets the user type the %DV straight off a label; the conversion (`mass_mcg
-  = (percent / 100) * ref_daily_values.dv_amount_mcg`) happens in Python code
+  = (percent / 100) * ref_daily_values.dv_amount`) happens in Python code
   before writing to `dim_items`. All %DV-based nutrients are stored in
   micrograms uniformly (mg-based ones like Calcium get ×1000'd on entry) for
   apples-to-apples consistency.
@@ -219,10 +219,10 @@ created and presented in reports).
 |---|---|
 | `nutrient_id` | PK |
 | `nutrient_name` | Editable (rare case: FDA renames a nutrient). |
-| `dv_amount_mcg` | Editable. All daily values normalized to micrograms. |
+| `dv_amount` | Editable. All daily values normalized to micrograms. |
 | `is_tracked` | Bool, editable via checkbox on "Manage Tracked Nutrients" screen. See §7. |
 
-Not directly joined against other tables in normal queries. `dv_amount_mcg` is 
+Not directly joined against other tables in normal queries. `dv_amount` is 
 referred to for %DV→mass conversion at `dim_items` entry time. `is_tracked` is 
 fed by the "Manage Tracked Nutrients" screen and is consulted by reporting to 
 decide which nutrient columns to display.
@@ -347,7 +347,7 @@ generic Settings screen.
 - **"Manage Tracked Nutrients" screen (permanent, always accessible):** A
   button on the main GUI leads to a screen listing every FDA nutrient
   (populated from `ref_daily_values`), each row inline-editable for
-  `nutrient_name` and `dv_amount_mcg` (rare edits — an FDA rename or
+  `nutrient_name` and `dv_amount` (rare edits — an FDA rename or
   daily-value revision), plus an editable checkbox bound to `is_tracked`.
   There is no separate screen for editing name/daily-value — everything
   lives on this one screen. The Setup Wizard is really just a friendlier
@@ -368,7 +368,7 @@ generic Settings screen.
 A multi-step, installer-style flow shown on first launch of a new project
 (i.e. against a fresh, empty `foodlog.db`). It runs exactly once per
 project file and does not reappear on subsequent launches once completed.
-See @/gui/setup_wizard1.md for the full ASCII mockup of every step.
+See @/gui/setup_wizard.md for the full ASCII mockup of every step.
 
 Only the Nutrient Tracking step is mandatory — every other step can be
 skipped and revisited later via the corresponding screen on the Main GUI.
@@ -547,7 +547,8 @@ be deleted. No silent orphaning, no automatic reassignment.
 
 ### Manage Tracked Nutrients
 See §7. Editable nutrient name list (from `ref_daily_values`), editable daily 
-value (mcg) fields, with an editable tracked/untracked checkbox per row.
+value fields, a read-only UNITS display column showing the unit for each 
+nutrient, and an editable tracked/untracked checkbox per row.
 
 ### Settings
 Not laid out in pixel-level detail (left to iteration with Claude Code), but
