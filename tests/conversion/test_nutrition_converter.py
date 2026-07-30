@@ -55,8 +55,9 @@ def test_column_name_mapping_mass_nutrients() -> None:
     """Test nutrient to column name mapping for mass nutrients."""
     assert get_column_name("Calories") == "calories"
     assert get_column_name("Total Fat") == "total_fat_g"
-    assert get_column_name("Sodium") == "sodium_mg"
+    assert get_column_name("Sodium") == "sodium_mcg"
     assert get_column_name("Protein") == "protein_g"
+    assert get_column_name("Cholesterol") == "cholesterol_mcg"
 
 
 def test_column_name_mapping_dv_nutrients() -> None:

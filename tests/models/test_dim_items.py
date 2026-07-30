@@ -54,7 +54,7 @@ def test_item_nutrition_columns_present() -> None:
     item = Item()
     nutrition_cols = [
         'calories', 'total_fat_g', 'saturated_fat_g', 'trans_fat_g',
-        'cholesterol_mg', 'sodium_mg', 'total_carbs_g', 'dietary_fiber_g',
+        'cholesterol_mcg', 'sodium_mcg', 'total_carbs_g', 'dietary_fiber_g',
         'total_sugars_g', 'protein_g', 'vitamin_d_mcg', 'calcium_mcg',
         'iron_mcg', 'potassium_mcg'
     ]

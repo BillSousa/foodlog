@@ -55,7 +55,7 @@ def test_consumption_window_on_hand_calculation(test_db: Path) -> None:
             active=True,
             calories=100,
             protein_g=5,
-            sodium_mg=200,
+            sodium_mcg=200,
         )
         item_id = items_repo.create_item(item)
 
@@ -105,7 +105,7 @@ def test_consumption_window_on_hand_with_multiple_orders(test_db: Path) -> None:
             active=True,
             calories=100,
             protein_g=5,
-            sodium_mg=200,
+            sodium_mcg=200,
         )
         item_id = items_repo.create_item(item)
 

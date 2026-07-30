@@ -87,7 +87,7 @@ def test_dim_items_has_nutrition_columns() -> None:
             expected_nutrition = {
                 'calories',
                 'total_fat_g',
-                'sodium_mg',
+                'sodium_mcg',
                 'protein_g',
                 'vitamin_d_mcg',
                 'calcium_mcg',

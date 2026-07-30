@@ -22,8 +22,8 @@ class Item:
     total_fat_g: float = 0.0
     saturated_fat_g: float = 0.0
     trans_fat_g: float = 0.0
-    cholesterol_mg: float = 0.0
-    sodium_mg: float = 0.0
+    cholesterol_mcg: float = 0.0
+    sodium_mcg: float = 0.0
     total_carbs_g: float = 0.0
     dietary_fiber_g: float = 0.0
     total_sugars_g: float = 0.0
