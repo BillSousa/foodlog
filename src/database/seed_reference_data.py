@@ -10,7 +10,7 @@ NUTRIENTS = [
     ("Sodium", "mcg", 2300000, 0, False),
     ("Total Carbohydrate", "g", 275, 0, False),
     ("Dietary Fiber", "g", 28, 0, False),
-    ("Total Sugars", "g", 50, 0, False),
+    ("Total Sugars", "g", 0, 0, False),
     ("Added Sugars", "g", 50, 0, False),
     ("Protein", "g", 50, 0, False),
     ("Vitamin D", "mcg", 20, 0, True),
@@ -38,7 +38,7 @@ NUTRIENTS = [
     ("Manganese", "mcg", 2300, 0, True),
     ("Chromium", "mcg", 35, 0, True),
     ("Molybdenum", "mcg", 45, 0, True),
-    ("Chloride", "mcg", 2300000, 0, False),
+    ("Chloride", "mcg", 2300000, 0, True),
     ("Choline", "mcg", 550000, 0, True),
     ("Ethanol", "g", 0, 0, False),
 ]
