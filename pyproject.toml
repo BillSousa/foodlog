@@ -8,10 +8,10 @@ dependencies = []
 
 [tool.uv]
 default-groups = ["dev", "test"]
-dev-dependencies = ["foodlog"]
 
 [dependency-groups]
 dev = [
+    "foodlog",
 	"jupyter",
 	"notebook",
 ]
@@ -21,8 +21,9 @@ test = [
     "pytest>=7.0.0; python_version == '3.12'",
     "pytest>=7.0.0; python_version == '3.13'",
     "pytest>=8.0.0; python_version == '3.14'",
-    "pytest-cov",
+    "pytest-cov>=6.0.0",
     "pytest-html",
+    "coverage>=7.6.0",
 ]
 
 
