@@ -2,11 +2,11 @@
 
 import pytest
 
-from src.conversion.nutrition_converter import (
+from foodlog.conversion.nutrition_converter import (
     convert_nutrition_for_storage,
     get_column_name,
 )
-from src.conversion.units import dv_percent_to_mcg
+from foodlog.conversion.units import dv_percent_to_mcg
 
 
 def test_mass_nutrient_stored_as_entered() -> None:
@@ -77,7 +77,7 @@ def test_column_name_unknown_nutrient_returns_none() -> None:
 
 def test_all_nutrients_have_column_names() -> None:
     """Test that all seeded nutrients have column name mappings."""
-    from src.database.seed_reference_data import NUTRIENTS
+    from foodlog.database.seed_reference_data import NUTRIENTS
 
     for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
         column = get_column_name(name)

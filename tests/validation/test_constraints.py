@@ -1,6 +1,6 @@
 import pytest
 
-from src.validation.constraints import (
+from foodlog.validation.constraints import (
     validate_order_status_transition,
     validate_integer_blocks,
     validate_price,

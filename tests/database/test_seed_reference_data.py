@@ -2,9 +2,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.database.connection import get_connection
-from src.database.schema import create_schema
-from src.database.seed_reference_data import seed_reference_data, NUTRIENTS
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.seed_reference_data import seed_reference_data, NUTRIENTS
 
 
 def test_seed_reference_data_inserts_nutrients() -> None:
@@ -13,7 +13,7 @@ def test_seed_reference_data_inserts_nutrients() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -34,7 +34,7 @@ def test_seed_reference_data_is_idempotent() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -68,7 +68,7 @@ def test_seed_reference_data_calories_tracked() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -94,7 +94,7 @@ def test_seed_reference_data_vitamin_d_tracked() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -120,7 +120,7 @@ def test_all_nutrients_initially_untracked() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()

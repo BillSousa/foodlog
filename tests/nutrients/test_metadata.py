@@ -1,6 +1,6 @@
 """Tests for nutrient metadata helpers."""
 
-from src.nutrients.metadata import (
+from foodlog.nutrients.metadata import (
     is_dv_percent_nutrient,
     get_nutrient_unit,
     get_nutrient_dv_amount,

@@ -3,8 +3,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.database.connection import get_connection
-from src.database.schema import create_schema
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
 
 
 def test_create_schema_creates_all_tables() -> None:
@@ -13,7 +13,7 @@ def test_create_schema_creates_all_tables() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -47,7 +47,7 @@ def test_ref_daily_values_has_correct_columns() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -74,7 +74,7 @@ def test_dim_items_has_nutrition_columns() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -103,7 +103,7 @@ def test_fact_orders_status_constraint() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -130,7 +130,7 @@ def test_create_schema_is_idempotent() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()

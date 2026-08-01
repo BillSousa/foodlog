@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 import pytest
 
-from src.database.connection import get_connection
-from src.database.schema import create_schema
-from src.database.seed_reference_data import seed_reference_data
-from src.models.dim_items import Item
-from src.models.dim_product_names import ProductName
-from src.repository.items_repository import ItemsRepository
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.seed_reference_data import seed_reference_data
+from foodlog.models.dim_items import Item
+from foodlog.models.dim_product_names import ProductName
+from foodlog.repository.items_repository import ItemsRepository
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def test_db() -> Path:
     """Create temp test database."""
     tmpdir = tempfile.mkdtemp()
     db_path = Path(tmpdir) / 'test.db'
-    with patch('src.database.connection.get_database_path', return_value=db_path):
+    with patch('foodlog.database.connection.get_database_path', return_value=db_path):
         conn = get_connection()
         create_schema(conn)
         seed_reference_data(conn)
@@ -27,7 +27,7 @@ def test_db() -> Path:
 
 def test_create_item(test_db: Path) -> None:
     """Test creating a new item."""
-    with patch('src.database.connection.get_database_path', return_value=test_db):
+    with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
         item = Item(
             name_id=1,
@@ -45,7 +45,7 @@ def test_create_item(test_db: Path) -> None:
 
 def test_get_item(test_db: Path) -> None:
     """Test retrieving an item."""
-    with patch('src.database.connection.get_database_path', return_value=test_db):
+    with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
         item = Item(
             name_id=1,
@@ -66,7 +66,7 @@ def test_get_item(test_db: Path) -> None:
 
 def test_update_item_price(test_db: Path) -> None:
     """Test updating item price (SCD1)."""
-    with patch('src.database.connection.get_database_path', return_value=test_db):
+    with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
         item = Item(name_id=1, price=2.99, units='g')
         item_id = repo.create_item(item)
@@ -77,7 +77,7 @@ def test_update_item_price(test_db: Path) -> None:
 
 def test_list_active_items(test_db: Path) -> None:
     """Test listing active items."""
-    with patch('src.database.connection.get_database_path', return_value=test_db):
+    with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
         item1 = Item(name_id=1, price=2.99, active=1, units='g')
         item2 = Item(name_id=2, price=3.99, active=1, units='g')
@@ -90,7 +90,7 @@ def test_list_active_items(test_db: Path) -> None:
 
 def test_search_items(test_db: Path) -> None:
     """Test searching items by name."""
-    with patch('src.database.connection.get_database_path', return_value=test_db):
+    with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         # Insert product name first
         conn = get_connection()
         cursor = conn.cursor()

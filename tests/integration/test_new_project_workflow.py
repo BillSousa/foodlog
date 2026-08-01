@@ -4,19 +4,19 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.database.connection import get_connection
-from src.database.schema import create_schema
-from src.database.seed_reference_data import seed_reference_data
-from src.initialization.initialize_defaults import initialize_defaults
-from src.initialization.first_run_check import is_first_run
-from src.models.dim_items import Item
-from src.models.fact_orders import Order
-from src.models.fact_order_lines import OrderLine
-from src.repository.items_repository import ItemsRepository
-from src.repository.orders_repository import OrdersRepository
-from src.repository.order_lines_repository import OrderLinesRepository
-from src.repository.settings_repository import SettingsRepository
-from src.repository.tracked_nutrients_repository import (
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.seed_reference_data import seed_reference_data
+from foodlog.initialization.initialize_defaults import initialize_defaults
+from foodlog.initialization.first_run_check import is_first_run
+from foodlog.models.dim_items import Item
+from foodlog.models.fact_orders import Order
+from foodlog.models.fact_order_lines import OrderLine
+from foodlog.repository.items_repository import ItemsRepository
+from foodlog.repository.orders_repository import OrdersRepository
+from foodlog.repository.order_lines_repository import OrderLinesRepository
+from foodlog.repository.settings_repository import SettingsRepository
+from foodlog.repository.tracked_nutrients_repository import (
     TrackedNutrientsRepository,
 )
 
@@ -27,7 +27,7 @@ def test_new_project_setup_workflow() -> None:
         db_path = Path(tmpdir) / "test.db"
 
         with patch(
-            "src.database.connection.get_database_path", return_value=db_path
+            "foodlog.database.connection.get_database_path", return_value=db_path
         ):
             # Step 1: Initialize database
             conn = get_connection()
@@ -115,7 +115,7 @@ def test_nutrient_tracking_workflow() -> None:
         db_path = Path(tmpdir) / "test.db"
 
         with patch(
-            "src.database.connection.get_database_path", return_value=db_path
+            "foodlog.database.connection.get_database_path", return_value=db_path
         ):
             conn = get_connection()
             create_schema(conn)

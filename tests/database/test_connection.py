@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.database.connection import (
+from foodlog.database.connection import (
     get_database_path,
     get_connection,
 )
@@ -25,7 +25,7 @@ def test_get_connection_creates_file() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -39,7 +39,7 @@ def test_get_connection_returns_valid_connection() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
@@ -57,7 +57,7 @@ def test_get_connection_row_factory() -> None:
         db_path = Path(tmpdir) / 'test.db'
 
         with patch(
-            'src.database.connection.get_database_path',
+            'foodlog.database.connection.get_database_path',
             return_value=db_path
         ):
             conn = get_connection()
