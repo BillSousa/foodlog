@@ -1,5 +1,8 @@
 ## foodlog
 
+[![Tests](https://raw.githubusercontent.com/BillSousa/foodlog/main/.github/badges/tests-badge.svg)](https://github.com/BillSousa/foodlog/actions)
+[![Tests](https://raw.githubusercontent.com/BillSousa/foodlog/main/.github/badges/coverage-badge.svg)](https://github.com/BillSousa/foodlog/actions) 
+
 [![Test Status 314](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py314.yml/badge.svg)](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py314.yml)
 [![Test Status 313](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py313.yml/badge.svg)](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py313.yml)
 [![Test Status 312](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py312.yml/badge.svg)](https://github.com/BillSousa/foodlog/actions/workflows/matrix-tests-py312.yml)
