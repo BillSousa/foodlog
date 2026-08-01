@@ -2,8 +2,8 @@
 """PyInstaller spec file for FoodLog."""
 
 a = Analysis(
-    ['src/main.py'],
-    pathex=[],
+    ['main.py'],
+    pathex=['src'],
     binaries=[],
     datas=[],
     hiddenimports=[

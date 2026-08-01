@@ -3,13 +3,13 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from src.calculations.ratios import ratio1, ratio2
-from src.database.connection import get_connection
-from src.database.schema import create_schema
-from src.database.seed_reference_data import seed_reference_data
-from src.models.dim_items import Item
-from src.repository.items_repository import ItemsRepository
-from src.repository.product_names_repository import ProductNamesRepository
+from foodlog.calculations.ratios import ratio1, ratio2
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.seed_reference_data import seed_reference_data
+from foodlog.models.dim_items import Item
+from foodlog.repository.items_repository import ItemsRepository
+from foodlog.repository.product_names_repository import ProductNamesRepository
 
 
 def test_ratio_pipeline_item_creation_to_calculation() -> None:
@@ -23,7 +23,7 @@ def test_ratio_pipeline_item_creation_to_calculation() -> None:
     tmpdir = tempfile.mkdtemp()
     db_path = Path(tmpdir) / 'test.db'
 
-    with patch('src.database.connection.get_database_path', return_value=db_path):
+    with patch('foodlog.database.connection.get_database_path', return_value=db_path):
         # Initialize database
         conn = get_connection()
         create_schema(conn)

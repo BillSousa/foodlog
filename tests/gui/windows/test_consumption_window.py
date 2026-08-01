@@ -5,18 +5,18 @@ from unittest.mock import patch
 
 import pytest
 
-from src.database.connection import get_connection
-from src.database.schema import create_schema
-from src.database.seed_reference_data import seed_reference_data
-from src.models.dim_items import Item
-from src.models.fact_consumption import Consumption
-from src.models.fact_order_lines import OrderLine
-from src.models.fact_orders import Order
-from src.repository.consumption_repository import ConsumptionRepository
-from src.repository.items_repository import ItemsRepository
-from src.repository.orders_repository import OrdersRepository
-from src.repository.order_lines_repository import OrderLinesRepository
-from src.calculations.on_hand import calculate_on_hand
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.seed_reference_data import seed_reference_data
+from foodlog.models.dim_items import Item
+from foodlog.models.fact_consumption import Consumption
+from foodlog.models.fact_order_lines import OrderLine
+from foodlog.models.fact_orders import Order
+from foodlog.repository.consumption_repository import ConsumptionRepository
+from foodlog.repository.items_repository import ItemsRepository
+from foodlog.repository.orders_repository import OrdersRepository
+from foodlog.repository.order_lines_repository import OrderLinesRepository
+from foodlog.calculations.on_hand import calculate_on_hand
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def test_db() -> Path:
     tmpdir = tempfile.mkdtemp()
     db_path = Path(tmpdir) / "test.db"
     with patch(
-        "src.database.connection.get_database_path", return_value=db_path
+        "foodlog.database.connection.get_database_path", return_value=db_path
     ):
         conn = get_connection()
         create_schema(conn)
@@ -37,7 +37,7 @@ def test_db() -> Path:
 def test_consumption_window_on_hand_calculation(test_db: Path) -> None:
     """Test that on-hand calculates correctly for consumption entry."""
     with patch(
-        "src.database.connection.get_database_path", return_value=test_db
+        "foodlog.database.connection.get_database_path", return_value=test_db
     ):
         conn = get_connection()
         create_schema(conn)
@@ -87,7 +87,7 @@ def test_consumption_window_on_hand_calculation(test_db: Path) -> None:
 def test_consumption_window_on_hand_with_multiple_orders(test_db: Path) -> None:
     """Test on-hand across multiple orders."""
     with patch(
-        "src.database.connection.get_database_path", return_value=test_db
+        "foodlog.database.connection.get_database_path", return_value=test_db
     ):
         conn = get_connection()
         create_schema(conn)
@@ -158,7 +158,7 @@ def test_consumption_save_path_end_to_end(test_db: Path) -> None:
     - Calls log_consumption() (not create_consumption())
     """
     with patch(
-        "src.database.connection.get_database_path", return_value=test_db
+        "foodlog.database.connection.get_database_path", return_value=test_db
     ):
         conn = get_connection()
         create_schema(conn)
@@ -224,7 +224,7 @@ def test_consumption_save_path_end_to_end(test_db: Path) -> None:
 def test_consumption_multiple_entries(test_db: Path) -> None:
     """Test logging multiple consumption entries for same item."""
     with patch(
-        "src.database.connection.get_database_path", return_value=test_db
+        "foodlog.database.connection.get_database_path", return_value=test_db
     ):
         conn = get_connection()
         create_schema(conn)

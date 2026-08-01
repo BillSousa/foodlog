@@ -1,4 +1,4 @@
-from src.models.dim_items import Item
+from foodlog.models.dim_items import Item
 
 
 def test_item_default_values() -> None:

@@ -1,4 +1,4 @@
-from src.calculations.ratios import ratio1, ratio2
+from foodlog.calculations.ratios import ratio1, ratio2
 
 
 def test_ratio1_basic() -> None:

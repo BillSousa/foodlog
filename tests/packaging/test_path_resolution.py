@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-from src.database.connection import get_database_path
+from foodlog.database.connection import get_database_path
 
 
 def test_database_path_resolution_normal() -> None:
