@@ -1,8 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec file for FoodLog."""
 
+import sys
+from pathlib import Path
+
+entry_point = 'main.py'
+output_name = 'foodlog_win' if sys.platform == 'win32' else 'foodlog_linux'
+icon_path = 'build/foodlog.ico' if Path('build/foodlog.ico').exists() else None
+
 a = Analysis(
-    ['main.py'],
+    [entry_point],
     pathex=['src'],
     binaries=[],
     datas=[],
@@ -28,7 +35,8 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='foodlog',
+    name=output_name,
+    icon=icon_path,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

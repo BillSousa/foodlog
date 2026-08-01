@@ -15,8 +15,6 @@ if not exist "dist\FoodLog_Windows" mkdir dist\FoodLog_Windows
 REM Run PyInstaller
 pyinstaller --onedir ^
     --windowed ^
-    --name foodlog_win ^
-    --icon=build\foodlog.ico ^
     --distpath=dist\FoodLog_Windows ^
     --buildpath=build\temp_windows ^
     build\foodlog.spec

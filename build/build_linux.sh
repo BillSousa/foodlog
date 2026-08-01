@@ -17,8 +17,6 @@ mkdir -p dist/FoodLog_Linux
 # Run PyInstaller
 pyinstaller --onedir \
     --windowed \
-    --name foodlog_linux \
-    --icon=build/foodlog.ico \
     --distpath=dist/FoodLog_Linux \
     --buildpath=build/temp_linux \
     build/foodlog.spec
