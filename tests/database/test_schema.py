@@ -124,7 +124,11 @@ def test_fact_orders_status_constraint() -> None:
                 except sqlite3.IntegrityError:
                     pass
         finally:
-            conn.close()
+            if cursor:
+                cursor.close()
+                del cursor  # 💡 Explicitly delete cursor reference
+            if conn:
+                conn.close()
 
 
 def test_create_schema_is_idempotent() -> None:
