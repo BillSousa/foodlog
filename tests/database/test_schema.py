@@ -11,33 +11,35 @@ def test_create_schema_creates_all_tables() -> None:
     """Test create_schema creates all 8 tables."""
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / 'test.db'
-
-        with patch(
-            'foodlog.database.connection.get_database_path',
-            return_value=db_path
-        ):
-            conn = get_connection()
-            create_schema(conn)
-
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT name FROM sqlite_master "
-                "WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-            )
-            tables = {row[0] for row in cursor.fetchall()}
-
-            expected = {
-                'dim_product_names',
-                'dim_categories',
-                'ref_daily_values',
-                'dim_items',
-                'fact_orders',
-                'fact_order_lines',
-                'fact_consumption',
-                'settings',
-            }
-
-            assert tables == expected
+        
+        try:
+            with patch(
+                'foodlog.database.connection.get_database_path',
+                return_value=db_path
+            ):
+                conn = get_connection()
+                create_schema(conn)
+    
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT name FROM sqlite_master "
+                    "WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                )
+                tables = {row[0] for row in cursor.fetchall()}
+    
+                expected = {
+                    'dim_product_names',
+                    'dim_categories',
+                    'ref_daily_values',
+                    'dim_items',
+                    'fact_orders',
+                    'fact_order_lines',
+                    'fact_consumption',
+                    'settings',
+                }
+    
+                assert tables == expected
+        finally:
             conn.close()
 
 
