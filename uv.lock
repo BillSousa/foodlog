@@ -574,6 +574,7 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "foodlog" },
     { name = "jupyter" },
     { name = "notebook" },
 ]
@@ -587,6 +588,7 @@ test = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "foodlog" },
     { name = "jupyter" },
     { name = "notebook" },
 ]
@@ -596,7 +598,7 @@ test = [
     { name = "pytest", marker = "python_full_version == '3.12.*'", specifier = ">=7.0.0" },
     { name = "pytest", marker = "python_full_version == '3.13.*'", specifier = ">=7.0.0" },
     { name = "pytest", marker = "python_full_version == '3.14.*'", specifier = ">=8.0.0" },
-    { name = "pytest-cov" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pytest-html" },
 ]
 
