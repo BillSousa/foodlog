@@ -17,7 +17,7 @@ zero).
 │  ──────────────────────────────────────────────────────────────  │
 │  [Calories            ]  (n/a)         kcal      [X]             │
 │  [Total Fat           ]  (n/a)         g         [X]             │
-│  [Sodium              ]  (n/a)         mcg       [X]             │
+│  [Sodium              ]  (n/a)         mg        [X]             │
 │  [Vitamin D           ]  [20      ]    mcg       [X]             │
 │  [Vitamin A           ]  [900000  ]    mcg       [ ]             │
 │  [Folate              ]  [400     ]    mcg       [ ]             │
@@ -43,9 +43,8 @@ Notes:
   that nutrient (e.g., "g", "mcg", "kcal"). This is derived from the
   internal NUTRIENTS reference list and is for display/clarity only — it
   is not stored in `ref_daily_values`.
-- Nutrients without a meaningful daily-value percentage (calories, macros
-  given directly in grams on labels) show "(n/a)" in the Daily Value
-  column since they aren't %DV-converted, and have no edit box there.
+- Nutrients without an FDA daily-value number (e.g. calories) show "(n/a)"
+  in the Daily Value column and have no edit box there.
 - `is_tracked` is a pure visibility/reporting filter. Unchecking a nutrient
   never drops its column from `dim_items` or destroys historical data; it
   only hides that column from GUI entry forms and reporting output going

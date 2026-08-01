@@ -8,7 +8,6 @@ from foodlog.conversion.nutrition_converter import (
 )
 from foodlog.gui.components.nutrition_panel import NutritionPanel
 from foodlog.models.dim_items import Item
-from foodlog.models.dim_product_names import ProductName
 from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
