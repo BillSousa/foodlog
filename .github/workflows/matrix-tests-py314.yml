@@ -22,37 +22,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
 
-    - name: Install Poetry
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-
-    - name: Install dependencies with Poetry
-      run: |
-        poetry lock
-        poetry install
+    - name: Install dependencies with uv
+      run: uv sync
 
     - name: Run tests with reports
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        poetry run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=pybear --cov-report=xml:reports/coverage/coverage.xml
+      run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=pybear --cov-report=xml:reports/coverage/coverage.xml
       timeout-minutes: 120
 
     - name: Run tests without reports
       if: matrix.os != 'ubuntu-latest'
-      run: |
-        poetry run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings
+      run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings
       timeout-minutes: 120
-
-    - name: Install genbadge
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        pip install genbadge[tests,coverage]
 
     - name: Make Directories
       if: matrix.os == 'ubuntu-latest'
@@ -63,8 +50,7 @@ jobs:
 
     - name: Generate tests badge
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        genbadge tests -i reports/junit/junit.xml -o .github/badges/tests-badge.svg
+      run: uvx --with genbadge[tests,coverage] genbadge tests -i reports/junit/junit.xml -o .github/badges/tests-badge.svg
 
     - name: Upload tests badge
       if: matrix.os == 'ubuntu-latest'
@@ -75,8 +61,7 @@ jobs:
 
     - name: Generate coverage badge
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        genbadge coverage -i reports/coverage/coverage.xml -o .github/badges/coverage-badge.svg
+      run: uvx --with genbadge[tests,coverage] genbadge coverage -i reports/coverage/coverage.xml -o .github/badges/coverage-badge.svg
 
     - name: Upload coverage badge
       if: matrix.os == 'ubuntu-latest'
