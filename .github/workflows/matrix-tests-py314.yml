@@ -31,6 +31,13 @@ jobs:
     - name: Install dependencies with uv
       run: uv sync
 
+    - name: Make Directories
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mkdir -p .github/badges
+        mkdir -p reports/junit
+        mkdir -p reports/coverage
+
     - name: Run tests with reports
       if: matrix.os == 'ubuntu-latest'
       run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=pybear --cov-report=xml:reports/coverage/coverage.xml
@@ -40,13 +47,6 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
       run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings
       timeout-minutes: 120
-
-    - name: Make Directories
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        mkdir -p .github/badges
-        mkdir -p reports/junit
-        mkdir -p reports/coverage
 
     - name: Generate tests badge
       if: matrix.os == 'ubuntu-latest'
