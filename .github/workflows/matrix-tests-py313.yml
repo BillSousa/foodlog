@@ -31,61 +31,7 @@ jobs:
     - name: Install dependencies with uv
       run: uv sync
 
-    - name: Make Directories
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        mkdir -p .github/badges
-        mkdir -p reports/junit
-        mkdir -p reports/coverage
-
-    - name: Run tests with reports
-      if: matrix.os == 'ubuntu-latest'
-      run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=pybear --cov-report=xml:reports/coverage/coverage.xml
+    - name: Run tests
+      run: uv run pytest tests/ --doctest-modules -v --maxfail=1 --disable-warnings
       timeout-minutes: 120
 
-    - name: Run tests without reports
-      if: matrix.os != 'ubuntu-latest'
-      run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings
-      timeout-minutes: 120
-
-    - name: Generate tests badge
-      if: matrix.os == 'ubuntu-latest'
-      run: uvx --with genbadge[tests,coverage] genbadge tests -i reports/junit/junit.xml -o .github/badges/tests-badge.svg
-
-    - name: Upload tests badge
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: tests-badge
-        path: .github/badges/tests-badge.svg
-
-    - name: Generate coverage badge
-      if: matrix.os == 'ubuntu-latest'
-      run: uvx --with genbadge[tests,coverage] genbadge coverage -i reports/coverage/coverage.xml -o .github/badges/coverage-badge.svg
-
-    - name: Upload coverage badge
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-badge
-        path: .github/badges/coverage-badge.svg
-
-    - name: Commit Tests & Coverage Badges
-      if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'
-      run: |
-        git config user.name "ci-bot"
-        git config user.email "ci@example.com"
-        git checkout -b badge/update-${{ github.run_id }}
-        git add .github/badges/tests-badge.svg
-        git add .github/badges/coverage-badge.svg
-        # Only commit if there are staged changes        
-        if git diff --cached --quiet; then
-          echo "No badge updates to commit. Skipping PR."
-          exit 0
-        fi
-        git commit -m "Update tests & coverage badges"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:badge/update-${{ github.run_id }}
-
-        gh pr create --title "Update badges -- REMEMBER TO SKIP CI" --body "Auto-updated badges from CI run." --base main --head badge/update-${{ github.run_id }}
-      env:
-        GH_TOKEN: ${{ secrets.PAT_FOR_PR }}
