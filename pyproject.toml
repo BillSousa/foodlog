@@ -8,6 +8,7 @@ dependencies = []
 
 [tool.uv]
 default-groups = ["dev", "test"]
+dev-dependencies = ["foodlog"]
 
 [dependency-groups]
 dev = [
