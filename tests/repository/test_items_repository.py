@@ -68,7 +68,7 @@ def test_update_item_price(test_db: Path) -> None:
     """Test updating item price (SCD1)."""
     with patch('src.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
-        item = Item(name_id=1, price=2.99)
+        item = Item(name_id=1, price=2.99, units='g')
         item_id = repo.create_item(item)
         repo.update_item_price(item_id, 3.99)
         retrieved = repo.get_item(item_id)
@@ -79,8 +79,8 @@ def test_list_active_items(test_db: Path) -> None:
     """Test listing active items."""
     with patch('src.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
-        item1 = Item(name_id=1, price=2.99, active=1)
-        item2 = Item(name_id=2, price=3.99, active=1)
+        item1 = Item(name_id=1, price=2.99, active=1, units='g')
+        item2 = Item(name_id=2, price=3.99, active=1, units='g')
         repo.create_item(item1)
         repo.create_item(item2)
         items = repo.list_active_items()
@@ -103,7 +103,7 @@ def test_search_items(test_db: Path) -> None:
         conn.close()
 
         repo = ItemsRepository()
-        item = Item(name_id=name_id, price=2.99)
+        item = Item(name_id=name_id, price=2.99, units='g')
         repo.create_item(item)
 
         results = repo.search_items('Pasta')

@@ -135,11 +135,6 @@ class ItemFormDialog(tk.Toplevel):
                 messagebox.showerror("Error", "Name is required")
                 return
 
-            units = self.units_entry.get().strip()
-            if not units:
-                messagebox.showerror("Error", "Units is required")
-                return
-
             price = float(self.price_entry.get())
             container = float(self.container_entry.get())
             serving = float(self.serving_entry.get())
@@ -161,7 +156,7 @@ class ItemFormDialog(tk.Toplevel):
                 category_id=None,
                 price=price,
                 servings_per_block=servings_per_block,
-                units=units,
+                units=self.units_entry.get(),
                 container_size=container,
                 serving_size=serving,
                 blocks_must_be_integer=0,

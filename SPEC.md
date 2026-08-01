@@ -243,7 +243,7 @@ decide which nutrient columns to display.
 | `glycemic_index` | Nullable int, expected range 0–200, app-layer validated only                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ratio1` | Computed per-block value (see §9). Recalculated on item creation and whenever `price` is edited.                                                                                                                                                                                                                                                                                                                                                                         |
 | `ratio2` | Computed per-block value (see §9). Same recalculation triggers as `ratio1`.                                                                                                                                                                                                                                                                                                                                                                                              |
-| ~35 nutrition columns | All default 0, all equally optional/toggleable (see §7 and §5). Includes calories, total/saturated/trans fat, cholesterol, sodium, total carb, fiber, total/added sugars, protein, and the full FDA label vitamin/mineral list (vitamin D/A/C/E/K, calcium, iron, potassium, thiamin, riboflavin, niacin, B6, folate, B12, biotin, pantothenic acid, phosphorus, iodine, magnesium, zinc, selenium, copper, manganese, chromium, molybdenum, chloride) plus `ethanol_g`. |
+| ~39 nutrition columns | All default 0, all equally optional/toggleable (see §7 and §5). Includes calories, total/saturated/trans fat, cholesterol, sodium, total carb, fiber, total/added sugars, protein, and the full FDA label vitamin/mineral list (vitamin D/A/C/E/K, calcium, iron, potassium, thiamin, riboflavin, niacin, B6, folate, B12, biotin, pantothenic acid, phosphorus, iodine, magnesium, zinc, selenium, copper, manganese, chromium, molybdenum, chloride, choline) plus `ethanol_g`. |
 
 Note on `servings_per_block`: this value is not typed in directly by
 the user. It's derived automatically from `container_size / serving_size`,
@@ -280,7 +280,7 @@ typo fix) does NOT trigger a new row — that's handled via
 | `total_protein_g` | Whole-order aggregate |
 | `total_carbs_g` | Whole-order aggregate |
 | `total_fat_g` | Whole-order aggregate |
-| `total_sodium_g` | Whole-order aggregate |
+| `total_sodium_mg` | Whole-order aggregate |
 | `ratio1` | Whole-order ratio, computed from actual net cost/servings (see §9) |
 | `ratio2` | Whole-order ratio, same basis |
 
@@ -405,9 +405,8 @@ better. Constants are fudge factors calibrated by feel, not derived
 mathematically — treat as fixed constants in code, not configurable.
 
 ```
-Ratio1 = Total_Calories / (4 × Total_Cost + Total_Sodium_g/100 + 0.00001)
-Ratio2 = Total_Calories / (1.333 × Total_Cost + Total_Sodium_g/300
-                            + Total_Fat_g/6.6 + 0.00001)
+Ratio1 = Total_Calories / (4 × Total_Cost + Total_Sodium_mg/100 + 0.00001)
+Ratio2 = Total_Calories / (1.333 × Total_Cost + Total_Sodium_mg/300 + Total_Fat_g/6.6 + 0.00001)
 ```
 
 - The `+0.00001` exists purely to avoid divide-by-zero.
