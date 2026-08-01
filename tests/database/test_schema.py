@@ -104,26 +104,27 @@ def test_fact_orders_status_constraint() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / 'test.db'
 
-        with patch(
-            'foodlog.database.connection.get_database_path',
-            return_value=db_path
-        ):
-            conn = get_connection()
-            create_schema(conn)
-
-            cursor = conn.cursor()
-
-            try:
-                cursor.execute(
-                    '''INSERT INTO fact_orders
-                    (order_date, is_delivery, status)
-                    VALUES ('2026-07-29', 1, 'invalid_status')'''
-                )
-                assert False, "Should have raised constraint error"
-            except sqlite3.IntegrityError:
-                pass
-            finally:
-                conn.close()
+        try:
+            with patch(
+                'foodlog.database.connection.get_database_path',
+                return_value=db_path
+            ):
+                conn = get_connection()
+                create_schema(conn)
+    
+                cursor = conn.cursor()
+    
+                try:
+                    cursor.execute(
+                        '''INSERT INTO fact_orders
+                        (order_date, is_delivery, status)
+                        VALUES ('2026-07-29', 1, 'invalid_status')'''
+                    )
+                    assert False, "Should have raised constraint error"
+                except sqlite3.IntegrityError:
+                    pass
+        finally:
+            conn.close()
 
 
 def test_create_schema_is_idempotent() -> None:
