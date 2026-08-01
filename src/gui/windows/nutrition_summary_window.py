@@ -73,7 +73,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             multiplier = line.actual_servings
             calories = item.calories * multiplier
             protein = item.protein_g * multiplier
-            sodium = item.sodium_mg * multiplier
+            sodium = (item.sodium_mcg / 1000) * multiplier
 
             total_calories += calories
             total_protein += protein
@@ -143,7 +143,7 @@ class NutritionSummaryWindow(tk.Toplevel):
                                 line.actual_servings,
                                 item.calories * line.actual_servings,
                                 item.protein_g * line.actual_servings,
-                                item.sodium_mg * line.actual_servings,
+                                (item.sodium_mcg / 1000) * line.actual_servings,
                             ]
                         )
 

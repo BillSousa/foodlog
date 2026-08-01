@@ -4,7 +4,7 @@ from tkinter import messagebox
 
 from src.calculations.on_hand import calculate_on_hand
 from src.gui.components.item_search_filter import ItemSearchFilter
-from src.models.fact_consumption import Consumption
+from src.models.fact_consumption import ConsumptionEntry
 from src.repository.consumption_repository import ConsumptionRepository
 from src.repository.items_repository import ItemsRepository
 
@@ -134,12 +134,12 @@ class ConsumptionWindow(tk.Toplevel):
                     )
                     return
 
-                entry = Consumption(
+                entry = ConsumptionEntry(
                     item_id=item_id,
                     entry_date=self.entry_date,
                     servings_consumed=consumed,
                 )
-                consumption_repo.log_consumption(entry)
+                consumption_repo.create_consumption(entry)
 
             except ValueError:
                 messagebox.showerror("Invalid value", f"Item {item_id}")

@@ -140,7 +140,7 @@ class OrderCreationWindow(tk.Toplevel):
                 multiplier = values["actual_servings"]
                 total_calories += item.calories * multiplier
                 total_protein += item.protein_g * multiplier
-                total_sodium += item.sodium_mg * multiplier
+                total_sodium += (item.sodium_mcg / 1000) * multiplier
 
         self.totals.update(
             total_cost, total_calories, total_protein, total_sodium, 0, 0

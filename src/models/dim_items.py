@@ -1,21 +1,26 @@
 from dataclasses import dataclass
 
+from typing import (
+    Literal,
+    Optional
+)
+
 
 @dataclass
 class Item:
     """Food item with nutrition and pricing (SCD2 versioning on nutrition)."""
 
-    item_id: int | None = None
+    item_id: Optional[int] = None
     name_id: int = 0
-    category_id: int | None = None
+    category_id: Optional[int] = None
     price: float = 0.0
     servings_per_block: float = 0.0
-    units: str = ""
+    units: Optional[Literal["units", "g", "kg", "oz", "lb", "mL", "L", "fl oz", "tsp", "Tbsp", "cup", "pint", "quart", "gal"]] = None
     container_size: float = 0.0
     serving_size: float = 0.0
     blocks_must_be_integer: int = 0
     active: int = 1
-    glycemic_index: int | None = None
+    glycemic_index: Optional[int] = None
     ratio1: float = 0.0
     ratio2: float = 0.0
     calories: float = 0.0

@@ -73,7 +73,7 @@ class NutrientsStep(BaseStep):
 
         tk.Label(scrollable, text="", font=("Arial", 1)).pack()
 
-        for name, unit, dv, tracked in NUTRIENTS:
+        for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
             var = tk.BooleanVar(value=False)
             self.check_vars[name] = var
 

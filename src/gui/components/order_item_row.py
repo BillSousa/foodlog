@@ -120,8 +120,8 @@ class OrderItemRow:
 
             r1 = ratio1(
                 self.item.calories * servings,
-                net if net > 0 else 0.01,
-                self.item.sodium_mg * servings
+                net,
+                (self.item.sodium_mcg / 1000) * servings
             )
             self.ratio_label.config(text=f"{r1:.1f}")
 
