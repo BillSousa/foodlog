@@ -1,6 +1,10 @@
 import sqlite3
 
 
+# TODO: THIS NEEDS TO COME OUT OR BE BUILT DIRECTLY FROM `ref_daily_values` AT RUN-TIME. 
+# CURRENTLY IS (nutrient_name, nutrient_dim_items_unit, FDA daily value, tracked, is_dv_percent)
+# NOTHING SHOULD BE PULLING DATA FROM THIS. ANY VALUES IN HERE ARE IN OR CAN BE INFERRED FROM 
+# ref_daily_values.
 NUTRIENTS = [
     ("Calories", "kcal", 2000, 0, False),
     ("Total Fat", "g", 78, 0, False),
@@ -59,6 +63,8 @@ def seed_reference_data(conn: sqlite3.Connection) -> None:
     if cursor.fetchone()[0] > 0:
         return
 
+    # TODO: "NUTRIENTS" NEEDS TO COME OUT.
+    # THIS NEEDS TO CHANGE TO PULL FROM ref_daily_values.
     cursor.executemany(
         '''INSERT INTO ref_daily_values
         (nutrient_name, dv_amount, is_tracked)

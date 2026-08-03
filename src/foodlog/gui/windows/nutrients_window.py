@@ -6,6 +6,16 @@ from foodlog.repository.tracked_nutrients_repository import (
 )
 
 
+# TODO: THIS GUI NEEDS TO BE UPDATED FOR THE NEW COLUMNS IN ref_daily_values
+# `FDA Label Unit`: PULL FROM ref_daily_values.nutrient_fda_label_unit
+# `Entry Unit `: PULL FROM ref_daily_values.nutrient_entry_unit
+# `dim_items Unit`: PULL FROM ref_daily_values.nutrient_dim_items_unit
+
+# TODO: ALL NUTRIENT NAMES AS ENTERED HERE (WHICH FILL ref_daily_values.nutrient name) 
+# MUST AUTOTMATICALLY PROPAGATE TO ALL DISPLAYED NUTRIENT NAMES IN ALL OTHER GUIS.
+
+
+
 class NutrientsWindow(tk.Toplevel):
     """Manage tracked nutrients and daily values."""
 
@@ -94,6 +104,14 @@ class NutrientsWindow(tk.Toplevel):
         )
         dv_entry.pack(side=tk.LEFT, padx=2)
 
+        # TODO: CHANGE THIS, CURRENTLY ALL NUTRIENTS IN THIS GUI GET mcg AS "UNIT"
+        # THIS IS Phase 8, Step 34 IN THE PLAN.
+        # There needs to be a function here. DO NOT use `get_nutrient_unit()` here,
+        # that function gets the nutrient unit for entry in the items create/edit GUI.
+        # Need to create a new function, something like `get_nutrient_dim_items_unit()`,
+        # where the units of nutrient storage in `dim_items` are retrieved from the
+        # `ref_daily_values` table. Perhaps `get_nutrient_unit()` should change to
+        # `get_nutrient_entry_unit()`.
         tk.Label(row, text="mcg").pack(side=tk.LEFT, padx=2)
 
         tracked_checkbox = tk.Checkbutton(
