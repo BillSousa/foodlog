@@ -1,10 +1,18 @@
 import tkinter as tk
 
+# TODO: "NUTRIENTS" NEEDS TO COME OUT.
 from foodlog.database.seed_reference_data import NUTRIENTS
 from foodlog.nutrients.metadata import get_nutrient_unit
 from foodlog.repository.tracked_nutrients_repository import (
     TrackedNutrientsRepository,
 )
+
+
+# TODO: UNITS OF ENTRY FOR EACH NUTRIENT (e.g., calcium, magnesium, etc.) MUST BE PULLED FROM 
+# ref_daily_values.nutrient_entry_unit FOR DISPLAY HERE.
+# TODO: CALCULATIONS DRIVING NUTRIENT QUANTITY UNIT CONVERSIONS (FOR FILLING THE CORRESPONDING COLUMNS 
+# IN dim_items FROM VALUES ENTERED HERE) MUST BE UPDATED TO PERFORM CONDITIONAL CONVERSIONS BASED ON 
+# ref_daily_values.nutrient_entry_unit.
 
 
 class NutritionPanel:
@@ -53,7 +61,8 @@ class NutritionPanel:
         canvas.create_window((0, 0), window=scrollable, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        for name, unit, dv, _, _ in NUTRIENTS:
+        # TODO: NUTRIENTS WILL HAVE TO COME OUT, USE ref_daily_values COLUMNS DIRECTLY.
+        for name, _, _, _, _ in NUTRIENTS:
             if name not in tracked:
                 continue
 

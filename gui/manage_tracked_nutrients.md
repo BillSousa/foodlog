@@ -7,6 +7,7 @@ underlying data — this screen lets the user revisit and change their mind
 anytime (e.g. dropping a nutrient a year later after noticing it's always
 zero).
 
+# TODO: UPDATE THE COLUMNS IN THE IS DIAGRAM
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │  MANAGE TRACKED NUTRIENTS                                        │
@@ -17,7 +18,7 @@ zero).
 │  ──────────────────────────────────────────────────────────────  │
 │  [Calories            ]  (n/a)         kcal      [X]             │
 │  [Total Fat           ]  (n/a)         g         [X]             │
-│  [Sodium              ]  (n/a)         mg        [X]             │
+│  [Sodium              ]  (n/a)         mcg       [X]             │
 │  [Vitamin D           ]  [20      ]    mcg       [X]             │
 │  [Vitamin A           ]  [900000  ]    mcg       [ ]             │
 │  [Folate              ]  [400     ]    mcg       [ ]             │
@@ -35,16 +36,27 @@ Notes:
 - `nutrient_name` edits are expected to be extremely rare (the FDA
   renaming a nutrient) — SCD-style rationale: editable in place because 
   the underlying identity (`nutrient_id`) doesn't change, just the label.
-- `dv_amount` edits are similarly rare (the FDA revising a daily
-  value) but the mechanism is the same simple inline edit — no history is
-  kept on this table; it's a small reference table the user can correct
-  directly if the FDA changes a number.
-- **UNITS column** is read-only and displays the unit of measurement for
-  that nutrient (e.g., "g", "mcg", "kcal"). This is derived from the
-  internal NUTRIENTS reference list and is for display/clarity only — it
-  is not stored in `ref_daily_values`.
+  Nutrient names as entered here must automatically propagate to all displayed 
+  nutrient names in all other GUIs.
+- TODO: ADD `nutrient_fda_label_unit`, read-only and displays the unit of
+  measurement for that nutrient (e.g., "g", "mg", "kcal") that is displayed
+  on actual food labels. This is from ref_daily_values.nutrient_fda_label_unit 
+  and is for display/clarity only.
+- TODO: ADD `nutrient_entry_unit` (MOST LIKELY THE SAME AS nutrient_fda_label_unit),
+  read-only and displays the unit of measurement for that nutrient (e.g., "g",
+  "mg", "kcal") that is displayed on the item create/edit GUI. This from
+  ref_daily_values.nutrient_entry_unit and is for display/clarity only.
+- `dv_amount` edits are similarly rare (the FDA revising a daily value) but
+  the mechanism is the same simple inline edit — no history is kept on this
+  table; it's a small reference table the user can correct directly if the
+  FDA changes a number.
 - Nutrients without an FDA daily-value number (e.g. calories) show "(n/a)"
   in the Daily Value column and have no edit box there.
+- TODO: ADD `nutrient_dim_items_unit`, read-only and displays the unit of
+  measurement for that nutrient (e.g., "g", "mcg", "kcal") that is used 
+  when storing amount-per-serving quantities to `dim_items`. This is also
+  the `dv_amount` unit of entry for this GUI. This is from
+  ref_daily_values.nutrient_dim_items_unit and is for display/clarity only.
 - `is_tracked` is a pure visibility/reporting filter. Unchecking a nutrient
   never drops its column from `dim_items` or destroys historical data; it
   only hides that column from GUI entry forms and reporting output going

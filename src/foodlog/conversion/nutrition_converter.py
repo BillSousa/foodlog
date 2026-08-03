@@ -7,6 +7,9 @@ from foodlog.nutrients.metadata import (
 )
 
 # Map nutrient display names to dim_items attribute names
+# TODO: DO MORE RESEARCH ON THIS --- WHAT ABOUT CHANGES TO ref_daily_values.nutrient_name?
+# MAYBE THIS CAN GO AWAY. MAYBE WE CAN CONSTRUCT COLUMN NAME FROM VALUES IN `ref_daily_values`
+# WHEN GIVEN A NUTRIENT NAME OR NUTRIENT ID.
 NUTRIENT_TO_COLUMN_MAP = {
     "Calories": "calories",
     "Total Fat": "total_fat_g",

@@ -180,8 +180,8 @@ analysis via simple interfaces and a turnkey data storage mechanism.
   lets the user type the %DV straight off a label; the conversion (`mass_mcg
   = (percent / 100) * ref_daily_values.dv_amount`) happens in Python code
   before writing to `dim_items`. All %DV-based nutrients are stored in
-  micrograms uniformly (mg-based ones like Calcium get ×1000'd on entry) for
-  apples-to-apples consistency.
+  micrograms uniformly, and mg-based ones like Calcium get ×1000'd on entry, for
+  apples-to-apples consistency. 
 - **`glycemic_index` is the one nutrition-adjacent field that IS nullable**
   (no default). Rationale: it's not additive/summable across an order the way
   macros are, so 0 would be misleading (implies "no impact" rather than
@@ -215,12 +215,15 @@ grouped in category-based reports (no "Uncategorized" placeholder row is
 created and presented in reports).
 
 ### `ref_daily_values`
-| Column | Notes |
-|---|---|
-| `nutrient_id` | PK |
-| `nutrient_name` | Editable (rare case: FDA renames a nutrient). |
-| `dv_amount` | Editable. All daily values normalized to micrograms. |
-| `is_tracked` | Bool, editable via checkbox on "Manage Tracked Nutrients" screen. See §7. |
+| Column                     | Notes                                                                               |
+|----------------------------|-------------------------------------------------------------------------------------|
+| `nutrient_id`              | PK                                                                                  |
+| `nutrient_name`            | Editable (rare case: FDA renames a nutrient).                                       |
+| `nutrient_fda_label_unit`  | TODO: ADD `nutrient_fda_label_unit`. Must be populated from an outside source (FDA) |
+| `nutrient_entry_unit `     | TODO: ADD `nutrient_entry_unit ` (MOST LIKELY THE SAME AS nutrient_fda_label_unit)  |
+| `dv_amount`                | Editable. From the FDA, converted by user to nutrient_dim_items_unit at entry time. |
+| `nutrient_dim_items_unit`  | TODO: ADD `nutrient_dim_items_unit`. Most daily values normalized to micrograms.    |
+| `is_tracked`               | Bool, editable via checkbox on "Manage Tracked Nutrients" screen. See §7.           |
 
 Not directly joined against other tables in normal queries. `dv_amount` is 
 referred to for %DV→mass conversion at `dim_items` entry time. `is_tracked` is 
@@ -545,9 +548,14 @@ clear that category off every item using it before the category itself can
 be deleted. No silent orphaning, no automatic reassignment.
 
 ### Manage Tracked Nutrients
-See §7. Editable nutrient name list (from `ref_daily_values`), editable daily 
-value fields, a read-only UNITS display column showing the unit for each 
-nutrient, and an editable tracked/untracked checkbox per row.
+See §7. Editable nutrient name list (from `ref_daily_values`), a read-only 
+`nutrient_fda_label_unit` display column showing the respective units used on 
+food labels, a read-only `nutrient_entry_unit` display column showing the 
+units of entry in the item create/edit GUI (most likely identical to 
+`nutrient_fda_label_unit`), editable daily value fields, a read-only 
+`nutrient_dim_items_unit` display column showing the units of display in this 
+GUI (which is equal to the units of storage in `dim_items`), and an editable 
+tracked/untracked checkbox per row.
 
 ### Settings
 Not laid out in pixel-level detail (left to iteration with Claude Code), but
