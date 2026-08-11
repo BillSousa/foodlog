@@ -4,15 +4,23 @@ from foodlog.conversion.units import dv_percent_to_mcg
 from foodlog.nutrients.metadata import (
     is_dv_percent_nutrient,
     get_nutrient_dv_amount,
+    get_nutrient_entry_unit,
+    get_nutrient_dim_items_unit,
 )
 
 
-# Map nutrient display names to dim_items attribute names
+# Map nutrient display names to dim_items attribute names.
 # TODO: SONNET HAS CHOSEN TO BLOW THRU THIS AS OF 26_08_10, BUT THIS IS STILL A FUTURE POINT OF 
 # BREAKAGE SHOULD THE USER MODIFY ref_daily_values.nutrient_name.
+# Kept as an explicit map (not derived from nutrient_name) because display
+# names carry parenthetical suffixes (e.g. "Thiamin (Vitamin B1)") that
+# don't reduce to a column name cleanly. A nutrient rename via "Manage
+# Tracked Nutrients" does NOT propagate here automatically -- known
+# limitation, see i-am-you-vivid-wreath.md item 7.
 # OLD TODO: DO MORE RESEARCH ON THIS --- WHAT ABOUT CHANGES TO ref_daily_values.nutrient_name?
 # MAYBE THIS CAN GO AWAY. MAYBE WE CAN CONSTRUCT COLUMN NAME FROM VALUES IN `ref_daily_values`
 # WHEN GIVEN A NUTRIENT NAME OR NUTRIENT ID.
+
 NUTRIENT_TO_COLUMN_MAP = {
     "Calories": "calories",
     "Total Fat": "total_fat_g",
@@ -63,26 +71,27 @@ def convert_nutrition_for_storage(
     Convert nutrition value from user input to storage format.
 
     For %DV nutrients: user enters percent, convert to mcg using daily value.
-    For mass nutrients: user enters the value directly, store as-is.
+    For mass nutrients: user enters the value directly; if the entry unit
+    is "mg" but dim_items stores it in "mcg", multiply by 1000.
 
     Args:
         nutrient_name: Name of the nutrient
         user_value: Value entered by user
 
     Returns:
-        Value to store in dim_items (in mcg for %DV nutrients, original unit for others)
+        Value to store in dim_items
     """
-    if not is_dv_percent_nutrient(nutrient_name):
-        # Mass-based nutrient: store as entered
-        return user_value
+    if is_dv_percent_nutrient(nutrient_name):
+        dv_amount = get_nutrient_dv_amount(nutrient_name)
+        if dv_amount is None or dv_amount == 0:
+            return 0.0
+        return dv_percent_to_mcg(user_value, dv_amount)
 
-    # %DV nutrient: convert percent to mcg
-    dv_amount = get_nutrient_dv_amount(nutrient_name)
-    if dv_amount is None or dv_amount == 0:
-        # No daily value defined
-        return 0.0
-
-    return dv_percent_to_mcg(user_value, dv_amount)
+    entry_unit = get_nutrient_entry_unit(nutrient_name)
+    dim_items_unit = get_nutrient_dim_items_unit(nutrient_name)
+    if entry_unit == "mg" and dim_items_unit == "mcg":
+        return user_value * 1000
+    return user_value
 
 
 def get_column_name(nutrient_name: str) -> str | None:

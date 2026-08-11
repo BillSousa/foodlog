@@ -1,5 +1,9 @@
 """Tests for %DV nutrition value conversion."""
 
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 from foodlog.conversion.nutrition_converter import (
@@ -7,48 +11,87 @@ from foodlog.conversion.nutrition_converter import (
     get_column_name,
 )
 from foodlog.conversion.units import dv_percent_to_mcg
+from foodlog.database.connection import get_connection
+from foodlog.database.schema import create_schema
+from foodlog.database.migrations import migrate_schema
+from foodlog.database.seed_reference_data import seed_reference_data
 
 
-def test_mass_nutrient_stored_as_entered() -> None:
-    """Test that mass-based nutrients are stored as entered."""
-    # Sodium is mass-based (stored as mg)
-    result = convert_nutrition_for_storage("Sodium", 1000.0)
-    assert result == 1000.0
+@pytest.fixture
+def test_db() -> Path:
+    """Create temp test database."""
+    tmpdir = tempfile.mkdtemp()
+    db_path = Path(tmpdir) / "test.db"
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=db_path
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        migrate_schema(conn)
+        seed_reference_data(conn)
+        conn.close()
+    return db_path
 
-    # Calories is mass-based
-    result = convert_nutrition_for_storage("Calories", 150.0)
-    assert result == 150.0
 
-    # Total Fat is mass-based
-    result = convert_nutrition_for_storage("Total Fat", 10.0)
-    assert result == 10.0
+def test_mg_to_mcg_conversion(test_db: Path) -> None:
+    """Test that mg-entry nutrients are converted to mcg for storage."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Sodium: user enters in mg, stored in mcg
+        result = convert_nutrition_for_storage("Sodium", 1000.0)
+        assert result == 1_000_000.0
+
+        # Cholesterol: user enters in mg, stored in mcg
+        result = convert_nutrition_for_storage("Cholesterol", 300.0)
+        assert result == 300_000.0
 
 
-def test_dv_percent_nutrient_converts_to_mcg() -> None:
+def test_nutrients_without_conversion_stored_as_entered(test_db: Path) -> None:
+    """Test that nutrients without unit conversion are stored as entered."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Calories (kcal, no conversion)
+        result = convert_nutrition_for_storage("Calories", 150.0)
+        assert result == 150.0
+
+        # Total Fat (g, no conversion)
+        result = convert_nutrition_for_storage("Total Fat", 10.0)
+        assert result == 10.0
+
+
+def test_dv_percent_nutrient_converts_to_mcg(test_db: Path) -> None:
     """Test that %DV nutrients are converted to mcg."""
-    # Vitamin A: DV = 900 mcg, user enters 50%
-    result = convert_nutrition_for_storage("Vitamin A", 50.0)
-    expected = dv_percent_to_mcg(50.0, 900.0)
-    assert result == expected
-    assert result == 450.0  # (50 / 100) * 900
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Vitamin A: DV = 900 mcg, user enters 50%
+        result = convert_nutrition_for_storage("Vitamin A", 50.0)
+        expected = dv_percent_to_mcg(50.0, 900.0)
+        assert result == expected
+        assert result == 450.0  # (50 / 100) * 900
 
-    # Vitamin D: DV = 20 mcg, user enters 100%
-    result = convert_nutrition_for_storage("Vitamin D", 100.0)
-    expected = dv_percent_to_mcg(100.0, 20.0)
-    assert result == expected
-    assert result == 20.0
+        # Vitamin D: DV = 20 mcg, user enters 100%
+        result = convert_nutrition_for_storage("Vitamin D", 100.0)
+        expected = dv_percent_to_mcg(100.0, 20.0)
+        assert result == expected
+        assert result == 20.0
 
-    # Calcium: DV = 1300000 mcg, user enters 25%
-    result = convert_nutrition_for_storage("Calcium", 25.0)
-    expected = dv_percent_to_mcg(25.0, 1300000.0)
-    assert result == expected
-    assert result == 325000.0
+        # Calcium: DV = 1300000 mcg, user enters 25%
+        result = convert_nutrition_for_storage("Calcium", 25.0)
+        expected = dv_percent_to_mcg(25.0, 1300000.0)
+        assert result == expected
+        assert result == 325000.0
 
 
-def test_dv_zero_percent_returns_zero() -> None:
+def test_dv_zero_percent_returns_zero(test_db: Path) -> None:
     """Test that 0% DV nutrients return 0."""
-    result = convert_nutrition_for_storage("Vitamin A", 0.0)
-    assert result == 0.0
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        result = convert_nutrition_for_storage("Vitamin A", 0.0)
+        assert result == 0.0
 
 
 def test_column_name_mapping_mass_nutrients() -> None:
@@ -75,38 +118,51 @@ def test_column_name_unknown_nutrient_returns_none() -> None:
     assert get_column_name("") is None
 
 
-def test_all_nutrients_have_column_names() -> None:
+def test_all_nutrients_have_column_names(test_db: Path) -> None:
     """Test that all seeded nutrients have column name mappings."""
-    from foodlog.database.seed_reference_data import NUTRIENTS
+    from foodlog.repository.tracked_nutrients_repository import (
+        TrackedNutrientsRepository,
+    )
 
-    for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
-        column = get_column_name(name)
-        assert column is not None, f"No column mapping for {name}"
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        for nutrient in TrackedNutrientsRepository().list_all_nutrients():
+            column = get_column_name(nutrient.nutrient_name)
+            assert (
+                column is not None
+            ), f"No column mapping for {nutrient.nutrient_name}"
 
 
-def test_vitamin_d_conversion_matches_spec() -> None:
+def test_vitamin_d_conversion_matches_spec(test_db: Path) -> None:
     """Test Vitamin D conversion per SPEC.md example."""
-    # User enters 100% (entire daily value on label)
-    # Should convert to the actual mcg amount
-    result = convert_nutrition_for_storage("Vitamin D", 100.0)
-    # Vitamin D DV is 20 mcg
-    assert result == 20.0
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # User enters 100% (entire daily value on label)
+        # Should convert to the actual mcg amount
+        result = convert_nutrition_for_storage("Vitamin D", 100.0)
+        # Vitamin D DV is 20 mcg
+        assert result == 20.0
 
-    # User enters 50%
-    result = convert_nutrition_for_storage("Vitamin D", 50.0)
-    assert result == 10.0
+        # User enters 50%
+        result = convert_nutrition_for_storage("Vitamin D", 50.0)
+        assert result == 10.0
 
 
-def test_percent_dv_never_stored_directly() -> None:
+def test_percent_dv_never_stored_directly(test_db: Path) -> None:
     """
     Critical test: %DV values are NEVER stored directly in dim_items.
 
     They are converted to mcg at save time. This ensures historical
     consistency even if FDA daily values change (as they did in 2016).
     """
-    # When user enters "25%" for Calcium
-    # We should NOT store 25
-    # We should store the converted mcg value
-    result = convert_nutrition_for_storage("Calcium", 25.0)
-    assert result != 25.0
-    assert result == 325000.0  # 25% of 1,300,000 mcg DV
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # When user enters "25%" for Calcium
+        # We should NOT store 25
+        # We should store the converted mcg value
+        result = convert_nutrition_for_storage("Calcium", 25.0)
+        assert result != 25.0
+        assert result == 325000.0  # 25% of 1,300,000 mcg DV
