@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
 
-# TODO: "NUTRIENTS" NEEDS TO COME OUT.
-from foodlog.database.seed_reference_data import NUTRIENTS
 from foodlog.gui.steps.base_step import BaseStep
 from foodlog.repository.tracked_nutrients_repository import (
     TrackedNutrientsRepository,
@@ -74,16 +72,16 @@ class NutrientsStep(BaseStep):
 
         tk.Label(scrollable, text="", font=("Arial", 1)).pack()
 
-        # TODO: "NUTRIENTS" NEEDS TO COME OUT.
-        # THIS NEEDS TO CHANGE TO PULL FROM ref_daily_values.
-        for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
+        repo = TrackedNutrientsRepository()
+        for nutrient in repo.list_all_nutrients():
+            name = nutrient.nutrient_name
             var = tk.BooleanVar(value=False)
             self.check_vars[name] = var
 
             check = tk.Checkbutton(scrollable, text=name, variable=var)
             check.pack(anchor=tk.W, padx=20, pady=2)
 
-            if "Vitamin" in name or "Calcium" in name or "Iron" in name:
+            if nutrient.nutrient_entry_unit == "%":
                 self.vitamin_vars.append(var)
 
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

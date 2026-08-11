@@ -1,18 +1,9 @@
 import tkinter as tk
 
-# TODO: "NUTRIENTS" NEEDS TO COME OUT.
-from foodlog.database.seed_reference_data import NUTRIENTS
-from foodlog.nutrients.metadata import get_nutrient_unit
+from foodlog.nutrients.metadata import get_nutrient_entry_unit
 from foodlog.repository.tracked_nutrients_repository import (
     TrackedNutrientsRepository,
 )
-
-
-# TODO: UNITS OF ENTRY FOR EACH NUTRIENT (e.g., calcium, magnesium, etc.) MUST BE PULLED FROM 
-# ref_daily_values.nutrient_entry_unit FOR DISPLAY HERE.
-# TODO: CALCULATIONS DRIVING NUTRIENT QUANTITY UNIT CONVERSIONS (FOR FILLING THE CORRESPONDING COLUMNS 
-# IN dim_items FROM VALUES ENTERED HERE) MUST BE UPDATED TO PERFORM CONDITIONAL CONVERSIONS BASED ON 
-# ref_daily_values.nutrient_entry_unit.
 
 
 class NutritionPanel:
@@ -61,23 +52,26 @@ class NutritionPanel:
         canvas.create_window((0, 0), window=scrollable, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # TODO: NUTRIENTS WILL HAVE TO COME OUT, USE ref_daily_values COLUMNS DIRECTLY.
-        for name, _, _, _, _ in NUTRIENTS:
-            if name not in tracked:
+        for nutrient in repo.list_all_nutrients():
+            if nutrient.nutrient_name not in tracked:
                 continue
 
             row = tk.Frame(scrollable)
             row.pack(fill=tk.X, padx=5, pady=2)
 
-            display_unit = get_nutrient_unit(name)
-            label = tk.Label(row, text=f"{name} ({display_unit}):", width=25)
+            display_unit = get_nutrient_entry_unit(nutrient.nutrient_name)
+            label = tk.Label(
+                row,
+                text=f"{nutrient.nutrient_name} ({display_unit}):",
+                width=25
+            )
             label.pack(side=tk.LEFT)
 
             entry = tk.Entry(row, width=10)
             entry.insert(0, "0")
             entry.pack(side=tk.LEFT, padx=5)
 
-            self.entries[name] = entry
+            self.entries[nutrient.nutrient_name] = entry
 
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
