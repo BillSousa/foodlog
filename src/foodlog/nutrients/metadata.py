@@ -1,7 +1,13 @@
 """Nutrient metadata and helpers."""
 
-# TODO: "NUTRIENTS" NEEDS TO COME OUT.
-from foodlog.database.seed_reference_data import NUTRIENTS
+from foodlog.repository.tracked_nutrients_repository import (
+    TrackedNutrientsRepository,
+)
+
+
+def _get_nutrient_row(nutrient_name: str):
+    """Look up a nutrient's full row, or None if unknown."""
+    return TrackedNutrientsRepository().get_by_name(nutrient_name)
 
 
 def is_dv_percent_nutrient(nutrient_name: str) -> bool:
@@ -12,39 +18,52 @@ def is_dv_percent_nutrient(nutrient_name: str) -> bool:
         nutrient_name: Name of the nutrient
 
     Returns:
-        True if user enters %DV, False if user enters absolute mass    
+        True if user enters %DV, False if user enters absolute mass
     """
-
-    # TODO: "NUTRIENTS" NEEDS TO COME OUT.
-    # THIS FUNCTION NEEDS TO CHANGE TO PULL FROM ref_daily_values.nutrient_entry_unit.
-    for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
-        if name == nutrient_name:
-            return is_dv_percent
-    return False
+    row = _get_nutrient_row(nutrient_name)
+    return row is not None and row.nutrient_entry_unit == "%"
 
 
-def get_nutrient_unit(nutrient_name: str) -> str:
+def get_nutrient_entry_unit(nutrient_name: str) -> str:
     """
-    Get the display unit for a nutrient.
+    Get the unit the item create/edit GUI asks the user to enter.
 
     Args:
         nutrient_name: Name of the nutrient
 
     Returns:
-        Unit string (g, mg, mcg, kcal, %)
+        Unit string (g, mg, mcg, kcal, %), or "?" if unknown
     """
-
-    # TODO: "NUTRIENTS" NEEDS TO COME OUT.
-    # THIS FUNCTION NEEDS TO CHANGE TO PULL FROM ref_daily_values.nutrient_entry_unit.
-    # THIS FUNCTION MAY BE MORE APPROPRIATELY NAMED `get_nutrient_entry_unit`.
-    for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
-        if name == nutrient_name:
-            return "%" if is_dv_percent else unit
-    return "?"
+    row = _get_nutrient_row(nutrient_name)
+    return row.nutrient_entry_unit if row else "?"
 
 
-# TODO: NEED TO CREATE A get_nutrient_dim_items_unit() FUNCTION.
-# THIS FUNCTION NEEDS TO PULL FROM ref_daily_values.nutrient_dim_items_unit.
+def get_nutrient_fda_label_unit(nutrient_name: str) -> str:
+    """
+    Get the unit as printed on real FDA nutrition labels.
+
+    Args:
+        nutrient_name: Name of the nutrient
+
+    Returns:
+        Unit string (g, mg, mcg, kcal), or "?" if unknown
+    """
+    row = _get_nutrient_row(nutrient_name)
+    return row.nutrient_fda_label_unit if row else "?"
+
+
+def get_nutrient_dim_items_unit(nutrient_name: str) -> str:
+    """
+    Get the unit a nutrient's value is stored in on dim_items.
+
+    Args:
+        nutrient_name: Name of the nutrient
+
+    Returns:
+        Unit string (g, mcg, kcal), or "?" if unknown
+    """
+    row = _get_nutrient_row(nutrient_name)
+    return row.nutrient_dim_items_unit if row else "?"
 
 
 def get_nutrient_dv_amount(nutrient_name: str) -> float | None:
@@ -57,9 +76,5 @@ def get_nutrient_dv_amount(nutrient_name: str) -> float | None:
     Returns:
         Daily value in mcg, or None if not found
     """
-
-    # TODO: "NUTRIENTS" NEEDS TO COME OUT, USE ref_daily_values.dv_amount
-    for name, unit, dv, tracked, is_dv_percent in NUTRIENTS:
-        if name == nutrient_name:
-            return dv
-    return None
+    row = _get_nutrient_row(nutrient_name)
+    return row.dv_amount if row else None

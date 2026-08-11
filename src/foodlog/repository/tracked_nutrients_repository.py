@@ -48,6 +48,29 @@ class TrackedNutrientsRepository:
         conn.close()
         return Nutrient(**dict(row)) if row else None
 
+    def get_by_name(self, nutrient_name: str) -> Nutrient | None:
+        """Look up a nutrient row by its display name.
+
+        Parameters
+        ----------
+        nutrient_name : str
+            Value of `ref_daily_values.nutrient_name` to look up.
+
+        Returns
+        -------
+        Nutrient | None
+            The matching row, or None if no nutrient has this name.
+        """
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT * FROM ref_daily_values WHERE nutrient_name = ?',
+            (nutrient_name,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return Nutrient(**dict(row)) if row else None
+
     def update_nutrient(
         self, nutrient_id: int, name: str, dv_amount: float, is_tracked: int
     ) -> None:
