@@ -29,6 +29,9 @@ def create_schema(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS ref_daily_values (
             nutrient_id INTEGER PRIMARY KEY AUTOINCREMENT,
             nutrient_name TEXT NOT NULL,
+            nutrient_fda_label_unit TEXT NOT NULL DEFAULT '',
+            nutrient_entry_unit TEXT NOT NULL DEFAULT '',
+            nutrient_dim_items_unit TEXT NOT NULL DEFAULT '',
             dv_amount REAL NOT NULL,
             is_tracked INTEGER NOT NULL DEFAULT 0
         )

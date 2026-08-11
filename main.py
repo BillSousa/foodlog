@@ -1,4 +1,5 @@
 from foodlog.database.connection import get_connection
+from foodlog.database.migrations import migrate_schema
 from foodlog.database.schema import create_schema
 from foodlog.database.seed_reference_data import seed_reference_data
 from foodlog.initialization.first_run_check import is_first_run
@@ -8,6 +9,7 @@ from foodlog.initialization.initialize_defaults import initialize_defaults
 def main() -> None:
     conn = get_connection()
     create_schema(conn)
+    migrate_schema(conn)
     seed_reference_data(conn)
     conn.close()
 

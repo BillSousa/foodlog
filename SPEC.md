@@ -219,10 +219,10 @@ created and presented in reports).
 |----------------------------|-------------------------------------------------------------------------------------|
 | `nutrient_id`              | PK                                                                                  |
 | `nutrient_name`            | Editable (rare case: FDA renames a nutrient).                                       |
-| `nutrient_fda_label_unit`  | TODO: ADD `nutrient_fda_label_unit`. Must be populated from an outside source (FDA) |
-| `nutrient_entry_unit `     | TODO: ADD `nutrient_entry_unit ` (MOST LIKELY THE SAME AS nutrient_fda_label_unit)  |
+| `nutrient_fda_label_unit` | Read-only reference unit as printed on real FDA labels (e.g. "mg", "mcg", "g", "mL", "kcal"). Populated from seed data, not user-editable. |
+| `nutrient_entry_unit` | Unit the item create/edit GUI asks the user to type in — either a mass or volume unit matching the label, or the literal string `"%"` for %DV-entered nutrients. `is_dv_percent_nutrient()` is derived from this (`== "%"`), not a separate stored flag. |
 | `dv_amount`                | Editable. From the FDA, converted by user to nutrient_dim_items_unit at entry time. |
-| `nutrient_dim_items_unit`  | TODO: ADD `nutrient_dim_items_unit`. Most daily values normalized to micrograms.    |
+| `nutrient_dim_items_unit` | Unit the value is stored in on `dim_items` (mirrors each nutrient column's `_g`/`_mcg`/`_mL`/no-suffix convention; always "mcg" for %DV nutrients). |
 | `is_tracked`               | Bool, editable via checkbox on "Manage Tracked Nutrients" screen. See §7.           |
 
 Not directly joined against other tables in normal queries. `dv_amount` is 
