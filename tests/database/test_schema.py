@@ -62,6 +62,9 @@ def test_ref_daily_values_has_correct_columns() -> None:
             expected = {
                 'nutrient_id',
                 'nutrient_name',
+                'nutrient_fda_label_unit',
+                'nutrient_entry_unit',
+                'nutrient_dim_items_unit',
                 'dv_amount',
                 'is_tracked',
             }

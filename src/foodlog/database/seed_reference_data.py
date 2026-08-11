@@ -1,50 +1,49 @@
 import sqlite3
 
 
-# TODO: THIS NEEDS TO COME OUT OR BE BUILT DIRECTLY FROM `ref_daily_values` AT RUN-TIME. 
-# CURRENTLY IS (nutrient_name, nutrient_dim_items_unit, FDA daily value, tracked, is_dv_percent)
-# NOTHING SHOULD BE PULLING DATA FROM THIS. ANY VALUES IN HERE ARE IN OR CAN BE INFERRED FROM 
-# ref_daily_values.
+# TODO: FOR VITAMINS AND MINERALS, nutrient_fda_label_unit IS IN mg/mcg AND 
+# nutrient_entry_unit IS STILL IN %. ALTHOUGH EITHER MASS-ENTRY OR %-ENTRY CAN WORK, 
+# MAY WANT TO REVISIT IN THE FUTURE AND DECIDE IF WE WANT nutrient_entry_unit IN mg/mcg.
 NUTRIENTS = [
-    ("Calories", "kcal", 2000, 0, False),
-    ("Total Fat", "g", 78, 0, False),
-    ("Saturated Fat", "g", 20, 0, False),
-    ("Trans Fat", "g", 0, 0, False),
-    ("Cholesterol", "mcg", 300000, 0, False),
-    ("Sodium", "mcg", 2300000, 0, False),
-    ("Total Carbohydrate", "g", 275, 0, False),
-    ("Dietary Fiber", "g", 28, 0, False),
-    ("Total Sugars", "g", 0, 0, False),
-    ("Added Sugars", "g", 50, 0, False),
-    ("Protein", "g", 50, 0, False),
-    ("Vitamin D", "mcg", 20, 0, True),
-    ("Calcium", "mcg", 1300000, 0, True),
-    ("Iron", "mcg", 18000, 0, True),
-    ("Potassium", "mcg", 4700000, 0, True),
-    ("Vitamin A", "mcg", 900, 0, True),
-    ("Vitamin C", "mcg", 90000, 0, True),
-    ("Vitamin E", "mcg", 15000, 0, True),
-    ("Vitamin K", "mcg", 120, 0, True),
-    ("Thiamin (Vitamin B1)", "mcg", 1200, 0, True),
-    ("Riboflavin (Vitamin B2)", "mcg", 1300, 0, True),
-    ("Niacin (Vitamin B3)", "mcg", 16000, 0, True),
-    ("Vitamin B6", "mcg", 1700, 0, True),
-    ("Folate", "mcg", 400, 0, True),
-    ("Vitamin B12", "mcg", 2.4, 0, True),
-    ("Biotin", "mcg", 30, 0, True),
-    ("Pantothenic Acid", "mcg", 5000, 0, True),
-    ("Phosphorus", "mcg", 1250000, 0, True),
-    ("Iodine", "mcg", 150, 0, True),
-    ("Magnesium", "mcg", 420000, 0, True),
-    ("Zinc", "mcg", 11000, 0, True),
-    ("Selenium", "mcg", 55, 0, True),
-    ("Copper", "mcg", 900, 0, True),
-    ("Manganese", "mcg", 2300, 0, True),
-    ("Chromium", "mcg", 35, 0, True),
-    ("Molybdenum", "mcg", 45, 0, True),
-    ("Chloride", "mcg", 2300000, 0, True),
-    ("Choline", "mcg", 550000, 0, True),
-    ("Ethanol", "g", 0, 0, False),
+    ("Calories", "kcal", "kcal", "kcal", 2000, 0),
+    ("Total Fat", "g", "g", "g", 78, 0),
+    ("Saturated Fat", "g", "g", "g", 20, 0),
+    ("Trans Fat", "g", "g", "g", 0, 0),
+    ("Cholesterol", "mg", "mg", "mcg", 300000, 0),
+    ("Sodium", "mg", "mg", "mcg", 2300000, 0),
+    ("Total Carbohydrate", "g", "g", "g", 275, 0),
+    ("Dietary Fiber", "g", "g", "g", 28, 0),
+    ("Total Sugars", "g", "g", "g", 0, 0),
+    ("Added Sugars", "g", "g", "g", 50, 0),
+    ("Protein", "g", "g", "g", 50, 0),
+    ("Vitamin D", "mcg", "%", "mcg", 20, 0),
+    ("Calcium", "mg", "%", "mcg", 1300000, 0),
+    ("Iron", "mg", "%", "mcg", 18000, 0),
+    ("Potassium", "mg", "%", "mcg", 4700000, 0),
+    ("Vitamin A", "mcg", "%", "mcg", 900, 0),
+    ("Vitamin C", "mg", "%", "mcg", 90000, 0),
+    ("Vitamin E", "mg", "%", "mcg", 15000, 0),
+    ("Vitamin K", "mcg", "%", "mcg", 120, 0),
+    ("Thiamin (Vitamin B1)", "mg", "%", "mcg", 1200, 0),
+    ("Riboflavin (Vitamin B2)", "mg", "%", "mcg", 1300, 0),
+    ("Niacin (Vitamin B3)", "mg", "%", "mcg", 16000, 0),
+    ("Vitamin B6", "mg", "%", "mcg", 1700, 0),
+    ("Folate", "mcg", "%", "mcg", 400, 0),
+    ("Vitamin B12", "mcg", "%", "mcg", 2.4, 0),
+    ("Biotin", "mcg", "%", "mcg", 30, 0),
+    ("Pantothenic Acid", "mg", "%", "mcg", 5000, 0),
+    ("Phosphorus", "mg", "%", "mcg", 1250000, 0),
+    ("Iodine", "mcg", "%", "mcg", 150, 0),
+    ("Magnesium", "mg", "%", "mcg", 420000, 0),
+    ("Zinc", "mg", "%", "mcg", 11000, 0),
+    ("Selenium", "mcg", "%", "mcg", 55, 0),
+    ("Copper", "mg", "%", "mcg", 900, 0),
+    ("Manganese", "mg", "%", "mcg", 2300, 0),
+    ("Chromium", "mcg", "%", "mcg", 35, 0),
+    ("Molybdenum", "mcg", "%", "mcg", 45, 0),
+    ("Chloride", "mg", "%", "mcg", 2300000, 0),
+    ("Choline", "mg", "%", "mcg", 550000, 0),
+    ("Ethanol", "g", "g", "g", 0, 0),
 ]
 
 
@@ -63,13 +62,16 @@ def seed_reference_data(conn: sqlite3.Connection) -> None:
     if cursor.fetchone()[0] > 0:
         return
 
-    # TODO: "NUTRIENTS" NEEDS TO COME OUT.
-    # THIS NEEDS TO CHANGE TO PULL FROM ref_daily_values.
     cursor.executemany(
         '''INSERT INTO ref_daily_values
-        (nutrient_name, dv_amount, is_tracked)
-        VALUES (?, ?, ?)''',
-        [(name, dv, tracked) for name, unit, dv, tracked, is_dv_percent in NUTRIENTS]
+        (nutrient_name, nutrient_fda_label_unit, nutrient_entry_unit,
+         nutrient_dim_items_unit, dv_amount, is_tracked)
+        VALUES (?, ?, ?, ?, ?, ?)''',
+        [
+            (name, label_unit, entry_unit, dim_items_unit, dv, tracked)
+            for name, label_unit, entry_unit, dim_items_unit, dv, tracked
+            in NUTRIENTS
+        ]
     )
 
     conn.commit()

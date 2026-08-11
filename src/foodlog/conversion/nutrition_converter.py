@@ -6,8 +6,11 @@ from foodlog.nutrients.metadata import (
     get_nutrient_dv_amount,
 )
 
+
 # Map nutrient display names to dim_items attribute names
-# TODO: DO MORE RESEARCH ON THIS --- WHAT ABOUT CHANGES TO ref_daily_values.nutrient_name?
+# TODO: SONNET HAS CHOSEN TO BLOW THRU THIS AS OF 26_08_10, BUT THIS IS STILL A FUTURE POINT OF 
+# BREAKAGE SHOULD THE USER MODIFY ref_daily_values.nutrient_name.
+# OLD TODO: DO MORE RESEARCH ON THIS --- WHAT ABOUT CHANGES TO ref_daily_values.nutrient_name?
 # MAYBE THIS CAN GO AWAY. MAYBE WE CAN CONSTRUCT COLUMN NAME FROM VALUES IN `ref_daily_values`
 # WHEN GIVEN A NUTRIENT NAME OR NUTRIENT ID.
 NUTRIENT_TO_COLUMN_MAP = {
