@@ -12,6 +12,8 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON_PREFERENCE: only-system
 
     strategy:
       matrix:
