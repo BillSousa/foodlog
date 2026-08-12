@@ -32,8 +32,8 @@ class ReportDateRangePicker:
         )
         end_entry.pack(side=tk.LEFT, padx=5)
 
-        self.start_var.trace("w", self._on_change)
-        self.end_var.trace("w", self._on_change)
+        self.start_var.trace_add(("w", self._on_change)
+        self.end_var.trace_add(("w", self._on_change)
 
     def _on_change(self, *args) -> None:
         """Notify on date change."""
