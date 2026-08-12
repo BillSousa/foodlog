@@ -40,7 +40,7 @@ jobs:
 
     - name: Run tests with reports
       if: matrix.os == 'ubuntu-latest'
-      run: uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=foodlog --cov-report=xml:reports/coverage/coverage.xml
+      run: xvfb-run -a uv run pytest tests/ -v --doctest-modules --maxfail=1 --disable-warnings --junitxml=reports/junit/junit.xml --html=reports/junit/report.html --cov=foodlog --cov-report=xml:reports/coverage/coverage.xml
       timeout-minutes: 120
 
     - name: Run tests without reports

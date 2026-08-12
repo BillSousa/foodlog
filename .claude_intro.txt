@@ -2,12 +2,15 @@ Read CLAUDE.md and SPEC.md. The number one rule of this project is do not waste
 my output tokens. Do not waste any of my tokens. Be brief in your answers. When 
 I ask you to read and understand something, do not provide a summary back unless 
 I tell you to. The rules in CLAUDE.md are to be strictly adhered to at all times.
+Do not save anything to system context or memory unless I tell you to or unless 
+you ask and get permission, usually it is a waste of input tokens. 
 
 
 Now I want you to look in /home/bear/.claude/plans. There are 3 files I want you 
 to read. i-am-you-vivid-wreath.md, ref-daily-values-unit-columns-plan.md, and 
-vivid-wreath-amendments.md. ref-daily-values-unit-columns-plan.md is "Plan A". We 
-have completed the first <<<>>> Items in Plan A and will continue at Item <<<>>>.
+vivid-wreath-amendments.md. ref-daily-values-unit-columns-plan.md is "Plan A", we 
+finished that yesterday. Today we need to work on vivid-wreath-amendments.md, but 
+we other things to do first.
 
 
 I want you to remember the rule about making backups of files before you edit 
