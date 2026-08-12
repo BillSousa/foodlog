@@ -59,7 +59,7 @@ class NutrientsStep(BaseStep):
         canvas.configure(yscrollcommand=scrollbar.set)
 
         self.master_var.trace_add(
-            "w",
+            "write",
             lambda *args: self._toggle_all_vitamins()
         )
 
