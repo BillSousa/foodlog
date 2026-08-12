@@ -28,6 +28,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         enable-cache: true
 
+    # Conditional step to install python3-tk on linux
+    # Need python3-tk on linux to run tkinter
+    - name: Install python3-tk on linux
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get update && sudo apt-get install -y python3-tk
+
     - name: Install dependencies with uv
       run: uv sync
 
