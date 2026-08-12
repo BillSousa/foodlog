@@ -27,11 +27,11 @@ class OrderItemRow:
 
         self.servings_per_block = item.servings_per_block
 
-        self.blocks_var.trace_add(("w", self._on_blocks_change)
-        self.servings_var.trace_add(("w", self._on_servings_change)
-        self.sale_var.trace_add(("w", self._on_amount_change)
-        self.discount_var.trace_add(("w", self._on_amount_change)
-        self.coupon_var.trace_add(("w", self._on_amount_change)
+        self.blocks_var.trace_add("w", self._on_blocks_change)
+        self.servings_var.trace_add("w", self._on_servings_change)
+        self.sale_var.trace_add("w", self._on_amount_change)
+        self.discount_var.trace_add("w", self._on_amount_change)
+        self.coupon_var.trace_add("w", self._on_amount_change)
 
         self._layout()
 
