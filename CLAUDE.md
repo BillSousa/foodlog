@@ -1,6 +1,6 @@
 # FoodLog — Instructions for Claude Code
 
-**Read `SPEC.md` in full before doing any work on this project.** @SPEC.md 
+**Read `SPEC.md` in full before doing any work on this project.** SPEC.md 
 contains the complete, deliberated product specification — database schema, 
 business rules, packaging strategy, and GUI/screen inventory. It reflects 
 roughly 40 hours of design discussion and should be treated as authoritative 
@@ -24,6 +24,8 @@ instead of wasting tokens by hopelessly retrying the same things.
 ## Token Hygiene
 Do not read entire files unless necessary — read only relevant sections.
 Do not repeat back large chunks of code unless asked.
+When you are asked to read and understand something, do not provide a summary 
+back unless you are explicitly told to. 
 Keep responses concise — Be non-verbose and do not use lengthy preambles 
 or summaries.
 Present suggestions one step at a time when recommending action plans to the 
@@ -110,7 +112,7 @@ the approved changes.
   later, low-priority concern.
 - Packaging: PyInstaller, producing a Windows `.exe` and a Linux binary
   (built on Linux), both reading the same `foodlog.db` from a shared folder.
-  See @SPEC.md §4 for exact folder layout and the path-resolution rule
+  See SPEC.md §4 for exact folder layout and the path-resolution rule
   (locate the executable's own folder at runtime — never hardcode paths).
 - Charting (future): matplotlib embedded in Tkinter, not Plotly/web-based.
 
@@ -141,7 +143,7 @@ add it to the "Explicitly Rejected" section (§11) so it doesn't get re-proposed
 later. Treat SPEC.md as a living document, not a one-time handoff.
 
 ## The /gui Folder
-The @/gui folder at the project root contains one markdown file per screen
+The /gui folder at the project root contains one markdown file per screen
 (plus a couple of standalone dialog files not tied to any single screen),
 each holding ASCII-art mockups of that screen's layout. These are reference
 diagrams, not authoritative pixel-perfect specs — exact widget placement,

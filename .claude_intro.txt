@@ -1,18 +1,19 @@
-Read CLAUDE.md and SPEC.md. The number one rule of this project is do not waste 
-my output tokens. Do not waste any of my tokens. Be brief in your answers. When 
-I ask you to read and understand something, do not provide a summary back unless 
-I tell you to. The rules in CLAUDE.md are to be strictly adhered to at all times.
-Do not save anything to system context or memory unless I tell you to or unless 
-you ask and get permission, usually it is a waste of input tokens. 
+Read CLAUDE.md.  The rules in CLAUDE.md are to be strictly adhered to at all times. 
+The number one rule of this project is do not waste my output tokens. Do not waste 
+any of my tokens. Be brief in your answers. When you are asked to read and 
+understand something, do not provide a summary back unless you are explicitly told 
+to. Do not save anything to system context or memory unless I tell you to or unless 
+you ask and get permission.
 
 
-Now I want you to look in /home/bear/.claude/plans. There are 3 files I want you 
-to read. i-am-you-vivid-wreath.md, ref-daily-values-unit-columns-plan.md, and 
-vivid-wreath-amendments.md. ref-daily-values-unit-columns-plan.md is "Plan A", we 
-finished that yesterday. Today we need to work on vivid-wreath-amendments.md, but 
-we other things to do first.
+Read SPEC.md.
+
+
+Now I want you to look in /home/bear/.claude/plans. I want you to read 
+i-am-you-vivid-wreath.md. We need to work on implementing these steps today. 
+We will be picking up at Phase 2, Step 9.
 
 
 I want you to remember the rule about making backups of files before you edit 
 them. This is so I can do DIFFS and verify the work. And also, I always delete the 
-backup files after I finish the DIFFS, so you don't have to worry about that. 
+backup files after I finish the DIFFS, so you don't need worry about that.
