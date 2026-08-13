@@ -341,7 +341,7 @@ generic Settings screen.
 - **First-run Setup Wizard (mandatory, one-time nudge):** On first launch,
   presents checkboxes for every possible tracked field — calories, cost,
   every macro, every vitamin/mineral — with a master "Vitamins" toggle
-  (checking/unchecking it toggles all ~21 vitamin/mineral rows at once)
+  (checking/unchecking it toggles all ~27 vitamin/mineral rows at once)
   alongside individual overrides. An all-unchecked configuration is valid
   (bare-bones "what did I buy and when" log). This is intentionally the one
   forced decision point in the app, to make the user deliberately think
@@ -548,14 +548,11 @@ clear that category off every item using it before the category itself can
 be deleted. No silent orphaning, no automatic reassignment.
 
 ### Manage Tracked Nutrients
-See §7. Editable nutrient name list (from `ref_daily_values`), a read-only 
-`nutrient_fda_label_unit` display column showing the respective units used on 
-food labels, a read-only `nutrient_entry_unit` display column showing the 
-units of entry in the item create/edit GUI (most likely identical to 
-`nutrient_fda_label_unit`), editable daily value fields, a read-only 
-`nutrient_dim_items_unit` display column showing the units of display in this 
-GUI (which is equal to the units of storage in `dim_items`), and an editable 
-tracked/untracked checkbox per row.
+See §7. Editable nutrient name list (from `ref_daily_values`), editable daily value 
+fields, a read-only `nutrient_dim_items_unit` display column showing the units 
+of the values in the daily value field (which is also the units of the respective 
+values stored in `dim_items`), and an editable tracked/untracked 
+checkbox per row.
 
 ### Settings
 Not laid out in pixel-level detail (left to iteration with Claude Code), but

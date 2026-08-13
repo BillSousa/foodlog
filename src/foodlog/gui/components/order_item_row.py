@@ -1,6 +1,7 @@
 import tkinter as tk
 
 from foodlog.calculations.ratios import ratio1, ratio2
+from foodlog.calculations.to_negative import to_negative
 from foodlog.models.dim_items import Item
 
 
@@ -109,9 +110,9 @@ class OrderItemRow:
         try:
             servings = float(self.servings_var.get())
             price = self.item.price
-            sale = float(self.sale_var.get())
-            discount = float(self.discount_var.get())
-            coupon = float(self.coupon_var.get())
+            sale = to_negative(float(self.sale_var.get()))
+            discount = to_negative(float(self.discount_var.get()))
+            coupon = to_negative(float(self.coupon_var.get()))
 
             stated = price * servings
             net = stated + sale + discount + coupon
@@ -141,9 +142,9 @@ class OrderItemRow:
         try:
             servings_ordered = float(self.servings_var.get())
             stated_price = self.item.price
-            sale = float(self.sale_var.get())
-            discount = float(self.discount_var.get())
-            coupon = float(self.coupon_var.get())
+            sale = to_negative(float(self.sale_var.get()))
+            discount = to_negative(float(self.discount_var.get()))
+            coupon = to_negative(float(self.coupon_var.get()))
             net = (stated_price * servings_ordered) + sale + discount + coupon
 
             return {
