@@ -50,6 +50,7 @@ def test_item(test_db: Path) -> Item:
             calories=100.0,
             total_fat_g=5.0,
             sodium_mcg=500000.0,
+            choline_mcg=0.0,
         )
 
 

@@ -37,7 +37,8 @@ def test_create_item(test_db: Path) -> None:
             container_size=250,
             serving_size=40,
             calories=100.0,
-            protein_g=5.0
+            protein_g=5.0,
+            choline_mcg=0,
         )
         item_id = repo.create_item(item)
         assert item_id > 0
@@ -54,7 +55,8 @@ def test_get_item(test_db: Path) -> None:
             units='g',
             container_size=250,
             serving_size=40,
-            calories=100.0
+            calories=100.0,
+            choline_mcg=0,
         )
         item_id = repo.create_item(item)
         retrieved = repo.get_item(item_id)
@@ -68,7 +70,7 @@ def test_update_item_price(test_db: Path) -> None:
     """Test updating item price (SCD1)."""
     with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
-        item = Item(name_id=1, price=2.99, units='g')
+        item = Item(name_id=1, price=2.99, units='g', choline_mcg=0)
         item_id = repo.create_item(item)
         repo.update_item_price(item_id, 3.99)
         retrieved = repo.get_item(item_id)
@@ -79,8 +81,8 @@ def test_list_active_items(test_db: Path) -> None:
     """Test listing active items."""
     with patch('foodlog.database.connection.get_database_path', return_value=test_db):
         repo = ItemsRepository()
-        item1 = Item(name_id=1, price=2.99, active=1, units='g')
-        item2 = Item(name_id=2, price=3.99, active=1, units='g')
+        item1 = Item(name_id=1, price=2.99, active=1, units='g', choline_mcg=0)
+        item2 = Item(name_id=2, price=3.99, active=1, units='g', choline_mcg=0)
         repo.create_item(item1)
         repo.create_item(item2)
         items = repo.list_active_items()
@@ -103,7 +105,7 @@ def test_search_items(test_db: Path) -> None:
         conn.close()
 
         repo = ItemsRepository()
-        item = Item(name_id=name_id, price=2.99, units='g')
+        item = Item(name_id=name_id, price=2.99, units='g', choline_mcg=0)
         repo.create_item(item)
 
         results = repo.search_items('Pasta')

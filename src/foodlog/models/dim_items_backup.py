@@ -60,7 +60,6 @@ class Item:
     chromium_mcg: float = 0.0
     molybdenum_mcg: float = 0.0
     chloride_mcg: float = 0.0
-    choline_mcg: float = 0.0
     ethanol_g: float = 0.0
 
     def to_dict(self) -> dict:

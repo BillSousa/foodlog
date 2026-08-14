@@ -82,6 +82,7 @@ def test_ratio_pipeline_item_creation_to_calculation() -> None:
             chromium_mcg=0,
             molybdenum_mcg=0,
             chloride_mcg=0,
+            choline_mcg=0,
             ethanol_g=0,
             ratio1=0.0,
             ratio2=0.0,

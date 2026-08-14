@@ -38,17 +38,4 @@ def migrate_schema(conn: sqlite3.Connection) -> None:
             "WHERE nutrient_name = ?",
             (label_unit, entry_unit, dim_items_unit, name),
         )
-
-    cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='dim_items'"
-    )
-    if cursor.fetchone():
-        cursor.execute("PRAGMA table_info(dim_items)")
-        existing_items = {row[1] for row in cursor.fetchall()}
-        if "choline_mcg" not in existing_items:
-            cursor.execute(
-                "ALTER TABLE dim_items ADD COLUMN choline_mcg "
-                "REAL NOT NULL DEFAULT 0"
-            )
-
     conn.commit()

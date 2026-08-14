@@ -72,6 +72,7 @@ def test_new_project_setup_workflow() -> None:
                 calories=150,
                 protein_g=5,
                 sodium_mcg=400,
+                choline_mcg=0,
             )
             item_id = items_repo.create_item(item)
             assert item_id is not None
