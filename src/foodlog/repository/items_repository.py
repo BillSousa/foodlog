@@ -65,6 +65,40 @@ class ItemsRepository:
         conn.commit()
         conn.close()
 
+    def update_item_metadata(
+        self,
+        item_id: int,
+        category_id: int | None,
+        glycemic_index: int | None,
+        blocks_must_be_integer: int,
+        active: int,
+    ) -> None:
+        """
+        Update non-price, non-nutrition fields on an existing item.
+
+        Does not touch price (see `update_item_price`) or any
+        nutrition column (see `create_item_version`).
+
+        Args:
+            item_id: Item to update
+            category_id: Category assignment (nullable)
+            glycemic_index: Glycemic index value (nullable)
+            blocks_must_be_integer: 0 or 1
+            active: 0 or 1 - soft-delete flag
+        """
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''UPDATE dim_items
+               SET category_id = ?, glycemic_index = ?,
+                   blocks_must_be_integer = ?, active = ?
+               WHERE item_id = ?''',
+            (category_id, glycemic_index, blocks_must_be_integer, active,
+             item_id)
+        )
+        conn.commit()
+        conn.close()
+
     def create_item_version(self, template_item: Item) -> int:
         """
         Create new item version (SCD2) - for nutrition changes.
