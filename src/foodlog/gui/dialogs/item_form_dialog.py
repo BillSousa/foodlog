@@ -7,6 +7,12 @@ from foodlog.conversion.nutrition_converter import (
     get_column_name,
 )
 from foodlog.gui.components.nutrition_panel import NutritionPanel
+from foodlog.gui.helpers.item_form_populator import (
+    populate_item_form_data,
+)
+from foodlog.gui.helpers.should_create_new_version import (
+    should_create_new_version,
+)
 from foodlog.models.dim_items import Item
 from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
@@ -91,9 +97,23 @@ class ItemFormDialog(tk.Toplevel):
             row=6, column=1, sticky=tk.W, pady=5
         )
 
+        tk.Label(frame, text="Blocks Must Be Integer:").grid(
+            row=7, column=0, sticky=tk.W, pady=5
+        )
+        self.blocks_must_be_integer_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            frame, variable=self.blocks_must_be_integer_var
+        ).grid(row=7, column=1, sticky=tk.W, pady=5)
+
+        tk.Label(frame, text="Glycemic Index:").grid(
+            row=8, column=0, sticky=tk.W, pady=5
+        )
+        self.glycemic_index_entry = tk.Entry(frame, width=10)
+        self.glycemic_index_entry.grid(row=8, column=1, sticky=tk.W, pady=5)
+
         self.nutrition_panel = NutritionPanel(frame)
         self.nutrition_panel.get_frame().grid(
-            row=7, column=0, columnspan=2, sticky=tk.EW, pady=10
+            row=9, column=0, columnspan=2, sticky=tk.EW, pady=10
         )
 
         if self.item:
@@ -113,18 +133,22 @@ class ItemFormDialog(tk.Toplevel):
         if not self.item:
             return
 
-        self.name_entry.insert(0, "")
-        self.price_entry.insert(0, str(self.item.price))
-        self.units_entry.insert(0, self.item.units)
-        self.container_entry.insert(0, str(self.item.container_size))
-        self.serving_entry.insert(0, str(self.item.serving_size))
-        self.active_var.set(self.item.active == 1)
+        name_repo = ProductNamesRepository()
+        data = populate_item_form_data(self.item, name_repo)
 
-        nutrition_values = {
-            k: v for k, v in self.item.to_dict().items()
-            if k.endswith(("_g", "_mg", "_mcg"))
-        }
-        self.nutrition_panel.set_values(nutrition_values)
+        self.name_entry.insert(0, data['name_text'])
+        self.price_entry.insert(0, data['price'])
+        self.units_entry.insert(0, data['units'])
+        self.container_entry.insert(0, data['container_size'])
+        self.serving_entry.insert(0, data['serving_size'])
+        self.active_var.set(data['active'])
+        self.blocks_must_be_integer_var.set(
+            data['blocks_must_be_integer']
+        )
+        if data['glycemic_index'] is not None:
+            self.glycemic_index_entry.insert(0, data['glycemic_index'])
+
+        self.nutrition_panel.set_values(data['nutrition_values'])
 
     def _save(self) -> None:
         """Save item to database."""
@@ -153,21 +177,54 @@ class ItemFormDialog(tk.Toplevel):
             name_repo = ProductNamesRepository()
             name_id = name_repo.create_product_name(name)
 
+            category_id = None
+            selected_category_name = self.category_var.get().strip()
+            if selected_category_name:
+                cat_repo = CategoriesRepository()
+                categories = cat_repo.list_categories()
+                category_map = {
+                    c.category_name: c.category_id for c in categories
+                }
+                category_id = category_map.get(selected_category_name)
+
             servings_per_block = container / serving
+
+            blocks_must_be_integer = (
+                1 if self.blocks_must_be_integer_var.get() else 0
+            )
+
+            active = 1 if self.active_var.get() else 0
+
+            glycemic_index = None
+            gi_str = self.glycemic_index_entry.get().strip()
+            if gi_str:
+                try:
+                    glycemic_index = int(gi_str)
+                except ValueError:
+                    messagebox.showerror(
+                        "Error", "Glycemic Index must be a whole number"
+                    )
+                    return
 
             item = Item(
                 name_id=name_id,
-                category_id=None,
+                category_id=category_id,
                 price=price,
                 servings_per_block=servings_per_block,
                 units=units,
                 container_size=container,
                 serving_size=serving,
-                blocks_must_be_integer=0,
-                active=1 if self.active_var.get() else 0,
+                blocks_must_be_integer=blocks_must_be_integer,
+                active=active,
+                glycemic_index=glycemic_index,
             )
 
             nutrition = self.nutrition_panel.get_values()
+            nutrition_dict = {}
+            nutrition_dict['units'] = units
+            nutrition_dict['container_size'] = container
+            nutrition_dict['serving_size'] = serving
+
             for nutrient_name, user_value in nutrition.items():
                 column_name = get_column_name(nutrient_name)
                 if column_name:
@@ -175,10 +232,21 @@ class ItemFormDialog(tk.Toplevel):
                         nutrient_name, user_value
                     )
                     setattr(item, column_name, converted_value)
+                    nutrition_dict[column_name] = converted_value
 
             repo = ItemsRepository()
             if self.item_id:
-                repo.update_item_price(self.item_id, price)
+                if should_create_new_version(self.item, nutrition_dict):
+                    repo.create_item_version(item)
+                else:
+                    repo.update_item_price(self.item_id, price)
+                    repo.update_item_metadata(
+                        self.item_id,
+                        category_id,
+                        glycemic_index,
+                        blocks_must_be_integer,
+                        active,
+                    )
             else:
                 repo.create_item(item)
 
