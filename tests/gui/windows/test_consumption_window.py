@@ -59,6 +59,7 @@ def test_consumption_window_on_hand_calculation(test_db: Path) -> None:
             calories=100,
             protein_g=5,
             sodium_mcg=200,
+            choline_mcg=0,
         )
         item_id = items_repo.create_item(item)
 
@@ -109,6 +110,7 @@ def test_consumption_window_on_hand_with_multiple_orders(test_db: Path) -> None:
             calories=100,
             protein_g=5,
             sodium_mcg=200,
+            choline_mcg=0,
         )
         item_id = items_repo.create_item(item)
 
@@ -182,6 +184,7 @@ def test_consumption_save_path_end_to_end(test_db: Path) -> None:
             calories=100,
             protein_g=5,
             sodium_mcg=200,
+            choline_mcg=0,
         )
         item_id = items_repo.create_item(item)
 
@@ -248,6 +251,7 @@ def test_consumption_multiple_entries(test_db: Path) -> None:
             calories=100,
             protein_g=5,
             sodium_mcg=200,
+            choline_mcg=0,
         )
         item_id = items_repo.create_item(item)
 

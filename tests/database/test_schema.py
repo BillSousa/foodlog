@@ -96,6 +96,7 @@ def test_dim_items_has_nutrition_columns() -> None:
                 'protein_g',
                 'vitamin_d_mcg',
                 'calcium_mcg',
+                'choline_mcg',
             }
 
             assert expected_nutrition.issubset(columns)

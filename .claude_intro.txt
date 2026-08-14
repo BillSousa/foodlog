@@ -2,8 +2,8 @@ Read CLAUDE.md.  The rules in CLAUDE.md are to be strictly adhered to at all tim
 The number one rule of this project is do not waste my output tokens. Do not waste 
 any of my tokens. Be brief in your answers. When you are asked to read and 
 understand something, do not provide a summary back unless you are explicitly told 
-to. Do not save anything to system context or memory unless I tell you to or unless 
-you ask and get permission.
+to so. Do not save anything to system context or memory unless you are explicitly 
+told to do so or unless you ask and get permission.
 
 
 Read SPEC.md.
@@ -11,7 +11,7 @@ Read SPEC.md.
 
 Now I want you to look in /home/bear/.claude/plans. I want you to read 
 i-am-you-vivid-wreath.md. We need to work on implementing these steps today. 
-We will be picking up at Phase 2, Step 9.
+We will be picking up at Phase 3, Step 11. Do not start until I tell you to.
 
 
 I want you to remember the rule about making backups of files before you edit 

@@ -89,6 +89,7 @@ def create_schema(conn: sqlite3.Connection) -> None:
             chromium_mcg REAL NOT NULL DEFAULT 0,
             molybdenum_mcg REAL NOT NULL DEFAULT 0,
             chloride_mcg REAL NOT NULL DEFAULT 0,
+            choline_mcg REAL NOT NULL DEFAULT 0,
             ethanol_g REAL NOT NULL DEFAULT 0,
             FOREIGN KEY (name_id) REFERENCES dim_product_names(name_id),
             FOREIGN KEY (category_id) REFERENCES dim_categories(category_id)
