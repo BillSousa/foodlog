@@ -1,8 +1,11 @@
 import tkinter as tk
 
-from foodlog.calculations.ratios import ratio1, ratio2
 from foodlog.calculations.to_negative import to_negative
+from foodlog.gui.components.live_ratio_calculator import compute_live_ratios
 from foodlog.models.dim_items import Item
+from foodlog.validation.constraints import (
+    ValidationError, validate_integer_blocks, validate_price
+)
 
 
 class OrderItemRow:
@@ -19,6 +22,7 @@ class OrderItemRow:
         self.item = item
         self.frame = tk.Frame(parent, relief=tk.SUNKEN, borderwidth=1)
         self.on_change_callback = None
+        self._updating = False
 
         self.blocks_var = tk.StringVar(value="1")
         self.servings_var = tk.StringVar(value=str(item.servings_per_block))
@@ -27,12 +31,20 @@ class OrderItemRow:
         self.coupon_var = tk.StringVar(value="0")
 
         self.servings_per_block = item.servings_per_block
+        self.last_valid_blocks = "1"
+        self.price_var = tk.StringVar(value=str(item.price))
+        self.last_valid_price = str(item.price)
 
         self.blocks_var.trace_add("write", self._on_blocks_change)
         self.servings_var.trace_add("write", self._on_servings_change)
-        self.sale_var.trace_add("write", self._on_amount_change)
-        self.discount_var.trace_add("write", self._on_amount_change)
-        self.coupon_var.trace_add("write", self._on_amount_change)
+
+        self.blocks_entry: tk.Entry | None = None
+        self.servings_entry: tk.Entry | None = None
+        self.price_entry: tk.Entry | None = None
+        self.sale_entry: tk.Entry | None = None
+        self.discount_entry: tk.Entry | None = None
+        self.coupon_entry: tk.Entry | None = None
+        self.delete_btn: tk.Button | None = None
 
         self._layout()
 
@@ -43,33 +55,37 @@ class OrderItemRow:
         )
 
         tk.Label(self.frame, text="Blk:").pack(side=tk.LEFT, padx=2)
-        tk.Entry(self.frame, textvariable=self.blocks_var, width=5).pack(
-            side=tk.LEFT, padx=2
-        )
+        self.blocks_entry = tk.Entry(self.frame, textvariable=self.blocks_var, width=5)
+        self.blocks_entry.pack(side=tk.LEFT, padx=2)
 
         tk.Label(self.frame, text="Srv:").pack(side=tk.LEFT, padx=2)
-        tk.Entry(self.frame, textvariable=self.servings_var, width=5).pack(
-            side=tk.LEFT, padx=2
-        )
+        self.servings_entry = tk.Entry(self.frame, textvariable=self.servings_var, width=5)
+        self.servings_entry.pack(side=tk.LEFT, padx=2)
 
-        tk.Label(self.frame, text=f"${self.item.price:.2f}").pack(
-            side=tk.LEFT, padx=10
-        )
+        self.price_entry = tk.Entry(self.frame, textvariable=self.price_var,
+                                    width=8)
+        self.price_entry.pack(side=tk.LEFT, padx=10)
+        self.price_entry.bind("<FocusOut>", self._on_price_change)
 
         tk.Label(self.frame, text="Sale:").pack(side=tk.LEFT, padx=2)
-        tk.Entry(self.frame, textvariable=self.sale_var, width=5).pack(
-            side=tk.LEFT, padx=2
-        )
+        self.sale_entry = tk.Entry(self.frame, textvariable=self.sale_var,
+                                   width=5)
+        self.sale_entry.pack(side=tk.LEFT, padx=2)
+        self.sale_entry.bind("<FocusOut>", self._on_amount_change)
 
         tk.Label(self.frame, text="Disc:").pack(side=tk.LEFT, padx=2)
-        tk.Entry(self.frame, textvariable=self.discount_var, width=5).pack(
-            side=tk.LEFT, padx=2
+        self.discount_entry = tk.Entry(
+            self.frame, textvariable=self.discount_var, width=5
         )
+        self.discount_entry.pack(side=tk.LEFT, padx=2)
+        self.discount_entry.bind("<FocusOut>", self._on_amount_change)
 
         tk.Label(self.frame, text="Coup:").pack(side=tk.LEFT, padx=2)
-        tk.Entry(self.frame, textvariable=self.coupon_var, width=5).pack(
-            side=tk.LEFT, padx=2
+        self.coupon_entry = tk.Entry(
+            self.frame, textvariable=self.coupon_var, width=5
         )
+        self.coupon_entry.pack(side=tk.LEFT, padx=2)
+        self.coupon_entry.bind("<FocusOut>", self._on_amount_change)
 
         self.net_label = tk.Label(self.frame, text="$0.00", width=8)
         self.net_label.pack(side=tk.LEFT, padx=5)
@@ -77,20 +93,33 @@ class OrderItemRow:
         self.ratio_label = tk.Label(self.frame, text="0.0", width=6)
         self.ratio_label.pack(side=tk.LEFT, padx=5)
 
-        delete_btn = tk.Button(self.frame, text="X", command=self._delete)
-        delete_btn.pack(side=tk.RIGHT, padx=5)
+        self.ratio2_label = tk.Label(self.frame, text="0.0", width=6)
+        self.ratio2_label.pack(side=tk.LEFT, padx=5)
+
+        self.delete_btn = tk.Button(self.frame, text="X", command=self._delete)
+        self.delete_btn.pack(side=tk.RIGHT, padx=5)
 
     def _on_blocks_change(self, *args) -> None:
         """Update servings when blocks change."""
+        if self._updating:
+            return
+        self._updating = True
         try:
             blocks = float(self.blocks_var.get())
+            validate_integer_blocks(blocks, self.item.blocks_must_be_integer)
             servings = blocks * self.servings_per_block
             self.servings_var.set(f"{servings:.2f}")
-        except ValueError:
-            pass
+            self.last_valid_blocks = self.blocks_var.get()
+        except (ValueError, ValidationError):
+            self.blocks_var.set(self.last_valid_blocks)
+        finally:
+            self._updating = False
 
     def _on_servings_change(self, *args) -> None:
         """Update blocks when servings change."""
+        if self._updating:
+            return
+        self._updating = True
         try:
             servings = float(self.servings_var.get())
             if self.servings_per_block > 0:
@@ -98,9 +127,11 @@ class OrderItemRow:
                 self.blocks_var.set(f"{blocks:.2f}")
         except ValueError:
             pass
+        finally:
+            self._updating = False
 
-    def _on_amount_change(self, *args) -> None:
-        """Recalculate net price and ratios."""
+    def _on_amount_change(self, event) -> None:
+        """Recalculate net price and ratios on focus-out."""
         self._update_display()
         if self.on_change_callback:
             self.on_change_callback()
@@ -109,7 +140,7 @@ class OrderItemRow:
         """Update net price and ratio display."""
         try:
             servings = float(self.servings_var.get())
-            price = self.item.price
+            price = float(self.price_var.get())
             sale = to_negative(float(self.sale_var.get()))
             discount = to_negative(float(self.discount_var.get()))
             coupon = to_negative(float(self.coupon_var.get()))
@@ -119,15 +150,29 @@ class OrderItemRow:
 
             self.net_label.config(text=f"${net:.2f}")
 
-            r1 = ratio1(
+            r1, r2 = compute_live_ratios(
                 self.item.calories * servings,
                 net,
-                (self.item.sodium_mcg / 1000) * servings
+                self.item.sodium_mcg * servings,
+                self.item.total_fat_g * servings
             )
             self.ratio_label.config(text=f"{r1:.1f}")
+            self.ratio2_label.config(text=f"{r2:.1f}")
 
         except ValueError:
             pass
+
+    def _on_price_change(self, event) -> None:
+        """Validate and update price on focus-out."""
+        try:
+            price = float(self.price_var.get())
+            validate_price(price)
+            self.last_valid_price = self.price_var.get()
+            self._update_display()
+            if self.on_change_callback:
+                self.on_change_callback()
+        except (ValueError, ValidationError):
+            self.price_var.set(self.last_valid_price)
 
     def _delete(self) -> None:
         """Delete this row."""
@@ -141,7 +186,7 @@ class OrderItemRow:
         """Get row values for database."""
         try:
             servings_ordered = float(self.servings_var.get())
-            stated_price = self.item.price
+            stated_price = float(self.price_var.get())
             sale = to_negative(float(self.sale_var.get()))
             discount = to_negative(float(self.discount_var.get()))
             coupon = to_negative(float(self.coupon_var.get()))
@@ -159,3 +204,29 @@ class OrderItemRow:
             }
         except ValueError:
             return {}
+
+    def set_locked(self, locked: bool) -> None:
+        """Disable/enable editable widgets.
+
+        Parameters
+        ----------
+        locked : bool
+            If True, disable all editable entry widgets and the delete
+            button. If False, enable them.
+        """
+        state = tk.DISABLED if locked else tk.NORMAL
+
+        if self.blocks_entry:
+            self.blocks_entry.config(state=state)
+        if self.servings_entry:
+            self.servings_entry.config(state=state)
+        if self.price_entry:
+            self.price_entry.config(state=state)
+        if self.sale_entry:
+            self.sale_entry.config(state=state)
+        if self.discount_entry:
+            self.discount_entry.config(state=state)
+        if self.coupon_entry:
+            self.coupon_entry.config(state=state)
+        if self.delete_btn:
+            self.delete_btn.config(state=state)

@@ -1,5 +1,6 @@
 from foodlog.database.connection import get_connection
 from foodlog.models.fact_orders import Order
+from foodlog.validation.constraints import validate_order_editable
 
 
 class OrdersRepository:
@@ -62,6 +63,92 @@ class OrdersRepository:
             'UPDATE fact_orders SET status = ? WHERE order_id = ?',
             (new_status, order_id)
         )
+        conn.commit()
+        conn.close()
+
+    def update_order_header(
+        self,
+        order_id: int,
+        order_date: str | None = None,
+        is_delivery: bool | None = None,
+        delivery_charge: float | None = None,
+        tip: float | None = None,
+        tax: float | None = None,
+        order_level_coupon: float | None = None,
+    ) -> None:
+        """Update order header fields (order metadata, not totals).
+
+        Checks that the order is not reconciled before allowing edits
+        (soft lock per SPEC §5).
+
+        Parameters
+        ----------
+        order_id : int
+            Primary key of the order to update.
+        order_date : str, optional
+            New order_date value. If None, unchanged.
+        is_delivery : bool, optional
+            New is_delivery value. If None, unchanged.
+        delivery_charge : float, optional
+            New delivery_charge value. If None, unchanged.
+        tip : float, optional
+            New tip value. If None, unchanged.
+        tax : float, optional
+            New tax value. If None, unchanged.
+        order_level_coupon : float, optional
+            New order_level_coupon value. If None, unchanged.
+
+        Raises
+        ------
+        ValidationError
+            If the order's status is reconciled (soft lock).
+        """
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT status FROM fact_orders WHERE order_id = ?',
+            (order_id,),
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            status = row['status']
+            validate_order_editable(status)
+
+        fields_to_update = []
+        values = []
+
+        if order_date is not None:
+            fields_to_update.append("order_date = ?")
+            values.append(order_date)
+        if is_delivery is not None:
+            fields_to_update.append("is_delivery = ?")
+            values.append(is_delivery)
+        if delivery_charge is not None:
+            fields_to_update.append("delivery_charge = ?")
+            values.append(delivery_charge)
+        if tip is not None:
+            fields_to_update.append("tip = ?")
+            values.append(tip)
+        if tax is not None:
+            fields_to_update.append("tax = ?")
+            values.append(tax)
+        if order_level_coupon is not None:
+            fields_to_update.append("order_level_coupon = ?")
+            values.append(order_level_coupon)
+
+        if not fields_to_update:
+            return
+
+        values.append(order_id)
+        set_clause = ", ".join(fields_to_update)
+        query = f"UPDATE fact_orders SET {set_clause} WHERE order_id = ?"
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, values)
         conn.commit()
         conn.close()
 

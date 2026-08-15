@@ -5,6 +5,7 @@ from foodlog.validation.constraints import (
     validate_integer_blocks,
     validate_price,
     validate_servings,
+    validate_order_editable,
     ValidationError,
 )
 
@@ -70,3 +71,16 @@ def test_servings_negative_rejected() -> None:
     """Test negative servings rejected."""
     with pytest.raises(ValidationError):
         validate_servings(-1.0)
+
+
+def test_order_editable_valid_statuses() -> None:
+    """Test editable statuses allow editing."""
+    assert validate_order_editable('planning')
+    assert validate_order_editable('ordered')
+    assert validate_order_editable('delivered')
+
+
+def test_order_editable_reconciled_rejected() -> None:
+    """Test reconciled status blocks editing."""
+    with pytest.raises(ValidationError):
+        validate_order_editable('reconciled')
