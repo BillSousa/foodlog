@@ -468,14 +468,15 @@ The most fully specified screen. Layout:
   the correct SCD2 item version when multiple similarly-named versions exist
   (but this may not be applicable if retired/superseded items are culled from
   the search pool.)
-- Per-item row: item name, **Blocks** entry box ⇄ **Servings** entry box
+- Per-item row: **item name**, **Blocks** entry box ⇄ **Servings** entry box
   (live bidirectional auto-calculation using `servings_per_block` — editing
-  either box recalculates the other instantly), stated price with an
-  inline shortcut icon/button opening a small "Update Stated Price" popup
-  that overwrites `dim_items.price` (SCD1), then Sale/Discount/Coupon entry
-  boxes (any sign accepted, stored negative), a computed Net column, and
-  live **Ratio1**/**Ratio2** columns recalculating when the user exits a
-  text box (not per keystroke)
+  either box recalculates the other instantly), an editable **Stated Price**
+  entry box (the snapshot locked in at line creation, freely editable until
+  order `status = reconciled`) with an adjacent button opening a small "Update
+  Stated Price" popup (for updating the underlying `dim_items.price` via SCD1),
+  **Sale/Discount/Coupon** entry boxes (any sign accepted, stored negative), a
+  computed **Net** column, and live **Ratio1**/**Ratio2** columns recalculating
+  when the user exits a text box (not per keystroke)
 - Footer: running totals (est. net cost, calories, sodium, etc.), an
   estimated-days-of-supply figure driven by the global `cal_per_day_target`
   (from `settings` — not a per-order input field), and live whole-order

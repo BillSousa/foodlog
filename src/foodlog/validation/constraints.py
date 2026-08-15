@@ -123,3 +123,28 @@ def validate_servings(servings: float) -> bool:
         raise ValidationError(f"Servings must be positive: {servings}")
 
     return True
+
+
+def validate_order_editable(status: str) -> bool:
+    """
+    Validate that an order with the given status is editable.
+
+    A reconciled order is locked from editing (soft lock per SPEC §5).
+    Toggling status away from reconciled re-enables editing.
+
+    Args:
+        status: Current order status
+
+    Returns:
+        bool: True if editable
+
+    Raises:
+        ValidationError: If status is reconciled
+    """
+    if status == 'reconciled':
+        raise ValidationError(
+            "Cannot edit a reconciled order. "
+            "Change status away from reconciled to re-enable editing."
+        )
+
+    return True

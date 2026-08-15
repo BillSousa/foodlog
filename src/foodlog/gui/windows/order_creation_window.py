@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from foodlog.gui.components.item_search_filter import ItemSearchFilter
+from foodlog.gui.components.live_ratio_calculator import compute_live_ratios
 from foodlog.gui.components.order_header import OrderHeader
 from foodlog.gui.components.order_item_row import OrderItemRow
 from foodlog.gui.components.order_totals import OrderTotals
@@ -10,6 +11,7 @@ from foodlog.models.fact_orders import Order
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.orders_repository import OrdersRepository
 from foodlog.repository.settings_repository import SettingsRepository
+from foodlog.validation.constraints import ValidationError
 
 
 class OrderCreationWindow(tk.Toplevel):
@@ -48,12 +50,12 @@ class OrderCreationWindow(tk.Toplevel):
         btn_row = tk.Frame(self)
         btn_row.pack(pady=5)
 
-        add_btn = tk.Button(
+        self.add_item_btn = tk.Button(
             btn_row,
             text="Add Item to Order",
             command=self._show_item_picker
         )
-        add_btn.pack(side=tk.LEFT, padx=5)
+        self.add_item_btn.pack(side=tk.LEFT, padx=5)
 
         summary_btn = tk.Button(
             btn_row,
@@ -130,7 +132,8 @@ class OrderCreationWindow(tk.Toplevel):
         total_cost = 0.0
         total_calories = 0.0
         total_protein = 0.0
-        total_sodium = 0.0
+        total_sodium_mcg = 0.0
+        total_fat_g = 0.0
 
         for entry in self.order_items:
             values = entry["row"].get_values()
@@ -140,10 +143,16 @@ class OrderCreationWindow(tk.Toplevel):
                 multiplier = values["actual_servings"]
                 total_calories += item.calories * multiplier
                 total_protein += item.protein_g * multiplier
-                total_sodium += (item.sodium_mcg / 1000) * multiplier
+                total_sodium_mcg += item.sodium_mcg * multiplier
+                total_fat_g += item.total_fat_g * multiplier
 
+        total_sodium_mg = total_sodium_mcg / 1000
+        r1, r2 = compute_live_ratios(
+            total_calories, total_cost, total_sodium_mcg, total_fat_g
+        )
         self.totals.update(
-            total_cost, total_calories, total_protein, total_sodium, 0, 0
+            total_cost, total_calories, total_protein, total_sodium_mg,
+            r1, r2
         )
 
     def _view_money_summary(self) -> None:
@@ -177,28 +186,51 @@ class OrderCreationWindow(tk.Toplevel):
             status="planning"
         )
 
-        orders_repo = OrdersRepository()
-        self.order_id = orders_repo.create_order(order)
+        try:
+            orders_repo = OrdersRepository()
+            self.order_id = orders_repo.create_order(order)
+
+            for entry in self.order_items:
+                values = entry["row"].get_values()
+                if values:
+                    line = OrderLine(
+                        order_id=self.order_id,
+                        item_id=values["item_id"],
+                        servings_ordered=values["servings_ordered"],
+                        actual_servings=values["actual_servings"],
+                        stated_price=values["stated_price"],
+                        sale=values["sale"],
+                        discount=values["discount"],
+                        coupon=values["coupon"],
+                        net_price=values["net_price"],
+                    )
+                    from foodlog.repository.order_lines_repository import (
+                        OrderLinesRepository,
+                    )
+                    lines_repo = OrderLinesRepository()
+                    lines_repo.create_order_line(line)
+
+            messagebox.showinfo("Success", f"Order #{self.order_id} saved")
+            self.destroy()
+        except ValidationError as e:
+            messagebox.showerror("Save failed", str(e))
+
+    def _set_locked(self, locked: bool) -> None:
+        """Disable/enable every editable widget except the status field.
+
+        Called with locked=True right after loading an order whose
+        status is 'reconciled', and locked=False whenever the status
+        dropdown is changed away from 'reconciled'.
+
+        Parameters
+        ----------
+        locked : bool
+            If True, disable all editable widgets except status Combobox.
+            If False, enable them.
+        """
+        self.header.set_locked(locked)
 
         for entry in self.order_items:
-            values = entry["row"].get_values()
-            if values:
-                line = OrderLine(
-                    order_id=self.order_id,
-                    item_id=values["item_id"],
-                    servings_ordered=values["servings_ordered"],
-                    actual_servings=values["actual_servings"],
-                    stated_price=values["stated_price"],
-                    sale=values["sale"],
-                    discount=values["discount"],
-                    coupon=values["coupon"],
-                    net_price=values["net_price"],
-                )
-                from foodlog.repository.order_lines_repository import (
-                    OrderLinesRepository,
-                )
-                lines_repo = OrderLinesRepository()
-                lines_repo.create_order_line(line)
+            entry["row"].set_locked(locked)
 
-        messagebox.showinfo("Success", f"Order #{self.order_id} saved")
-        self.destroy()
+        self.add_item_btn.config(state=tk.DISABLED if locked else tk.NORMAL)
