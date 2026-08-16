@@ -11,7 +11,7 @@ Read SPEC.md.
 
 Now I want you to look in /home/bear/.claude/plans. I want you to read 
 i-am-you-vivid-wreath.md. We need to work on implementing these steps today. 
-We will be picking up at Phase 4, Step 18a. Do not start until I tell you to.
+We will be picking up at Phase 4, Step 19a. Do not start until I tell you to.
 
 
 Background on i-am-you-vivid-wreath. This project first began by spending 4 days 
