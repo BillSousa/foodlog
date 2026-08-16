@@ -300,9 +300,11 @@ class TestItemFormDialogValidation:
     """Test validation on save."""
 
     @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.messagebox')
-    def test_save_empty_name_rejected(self, mock_msgbox, mock_tracked_repo, root):
+    def test_save_empty_name_rejected(self, mock_msgbox, mock_cat_repo, mock_tracked_repo, root):
         """Empty name shows error and doesn't save."""
+        mock_cat_repo.return_value.list_categories.return_value = []
         mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
@@ -318,9 +320,11 @@ class TestItemFormDialogValidation:
         assert 'required' in mock_msgbox.showerror.call_args[0][1].lower()
 
     @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.messagebox')
-    def test_save_empty_units_rejected(self, mock_msgbox, mock_tracked_repo, root):
+    def test_save_empty_units_rejected(self, mock_msgbox, mock_cat_repo, mock_tracked_repo, root):
         """Empty units shows error and doesn't save."""
+        mock_cat_repo.return_value.list_categories.return_value = []
         mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
@@ -336,9 +340,11 @@ class TestItemFormDialogValidation:
         assert 'required' in mock_msgbox.showerror.call_args[0][1].lower()
 
     @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.messagebox')
-    def test_save_negative_container_rejected(self, mock_msgbox, mock_tracked_repo, root):
+    def test_save_negative_container_rejected(self, mock_msgbox, mock_cat_repo, mock_tracked_repo, root):
         """Negative container size rejected."""
+        mock_cat_repo.return_value.list_categories.return_value = []
         mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
@@ -354,9 +360,11 @@ class TestItemFormDialogValidation:
         assert 'positive' in mock_msgbox.showerror.call_args[0][1].lower()
 
     @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.messagebox')
-    def test_save_zero_serving_rejected(self, mock_msgbox, mock_tracked_repo, root):
+    def test_save_zero_serving_rejected(self, mock_msgbox, mock_cat_repo, mock_tracked_repo, root):
         """Zero serving size rejected."""
+        mock_cat_repo.return_value.list_categories.return_value = []
         mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
@@ -397,9 +405,11 @@ class TestItemFormDialogValidation:
         assert 'whole number' in mock_msgbox.showerror.call_args[0][1].lower()
 
     @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.messagebox')
-    def test_save_invalid_price_rejected(self, mock_msgbox, mock_tracked_repo, root):
+    def test_save_invalid_price_rejected(self, mock_msgbox, mock_cat_repo, mock_tracked_repo, root):
         """Non-numeric price rejected."""
+        mock_cat_repo.return_value.list_categories.return_value = []
         mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
