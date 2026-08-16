@@ -258,3 +258,60 @@ def test_save_doesnt_close_on_validation_error(
                     order_creation_window._save()
                     # destroy() should NOT be called on validation error
                     mock_destroy.assert_not_called()
+
+
+def test_save_calls_update_order_totals(
+    order_creation_window: OrderCreationWindow, test_db: Path
+) -> None:
+    """Test _save() calculates and updates order-level totals."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=5.0,
+            total_fat_g=2.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        order_creation_window._add_item_row(item)
+        order_creation_window.order_items[0]["row"].blocks_var.set("2")
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(
+                order_creation_window, 'destroy'
+            ):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                ) as mock_orders_repo_class:
+                    mock_repo = MagicMock()
+                    mock_repo.create_order.return_value = 42
+                    mock_orders_repo_class.return_value = mock_repo
+
+                    order_creation_window._save()
+
+                    # Verify update_order_totals was called
+                    mock_repo.update_order_totals.assert_called_once()
+                    call_args = mock_repo.update_order_totals.call_args
+                    # order_id is passed as positional arg
+                    assert call_args[0][0] == 42
+                    call_kwargs = call_args[1]
+                    assert call_kwargs["total_calories"] > 0
+                    assert call_kwargs["total_protein_g"] > 0
+                    assert "ratio1" in call_kwargs
+                    assert "ratio2" in call_kwargs

@@ -11,6 +11,8 @@ The most fully specified screen. Used for both new orders (status
 │  ORDER CREATION / PLANNING                                    [Order #: --]    │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │ Order Date: [__________]   Delivery: [X]   Status: [Planning     ▼]           │
+│ Delivery Charge: [____.__]   Tip: [____.__]                                    │
+│ Tax: [____.__]              Order Coupon: [____.__]                            │
 │                                    [ View Order Summary $ ]  [ View Nutrition ] │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │ Search: [bread___________]     Categories: [ ]Baking [X]Pasta [ ]Meat  ...     │
@@ -32,6 +34,18 @@ The most fully specified screen. Used for both new orders (status
 ```
 
 Notes:
+- **Header now includes `delivery_charge`, `tip`, `tax`, and
+  `order_level_coupon`** as direct entry fields, alongside the fields
+  already there (`order_date`, `is_delivery`/Delivery checkbox, `status`).
+  All seven fields are `fact_orders` columns — grouping them together in
+  the header (expanding it vertically rather than cramming them
+  horizontally) keeps the header consistently "everything that's a
+  property of the order itself," separate from the line-item grid below
+  it. `order_level_coupon` is stored negative regardless of sign entered,
+  same convention as the per-line sale/discount/coupon fields. These four
+  fields remain also visible (read-only, rolled into the total) in the
+  Order Summary ($) pop-out — editing happens here in the header, the
+  pop-out just reflects the current values as part of the total.
 - **BLOCKS ⇄ SERVINGS**: editing either box live-recalculates the other
   using `servings_per_block`. If `blocks_must_be_integer = 1` for that item,
   fractional blocks are rejected; if `0` (e.g. variable-weight chicken),

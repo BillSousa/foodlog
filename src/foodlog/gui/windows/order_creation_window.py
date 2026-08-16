@@ -210,6 +210,53 @@ class OrderCreationWindow(tk.Toplevel):
                     lines_repo = OrderLinesRepository()
                     lines_repo.create_order_line(line)
 
+            # Calculate and update order-level totals from all line items
+            total_cost = 0.0
+            total_calories = 0.0
+            total_protein = 0.0
+            total_carbs = 0.0
+            total_fat = 0.0
+            total_sodium_mg = 0.0
+
+            for entry in self.order_items:
+                values = entry["row"].get_values()
+                if values:
+                    total_cost += values["net_price"]
+                    item = entry["item"]
+                    multiplier = values["actual_servings"]
+                    total_calories += item.calories * multiplier
+                    total_protein += item.protein_g * multiplier
+                    total_carbs += item.total_carbs_g * multiplier
+                    total_fat += item.total_fat_g * multiplier
+                    total_sodium_mg += item.sodium_mcg * multiplier / 1000
+
+            # Add header-level amounts to net cost
+            header_values = self.header.get_values()
+            total_cost += header_values["delivery_charge"]
+            total_cost += header_values["tip"]
+            total_cost += header_values["tax"]
+            total_cost += header_values["order_level_coupon"]
+
+            # Calculate ratios
+            r1, r2 = compute_live_ratios(
+                total_calories, total_cost,
+                total_sodium_mg * 1000,
+                total_fat
+            )
+
+            # Update database with calculated totals
+            orders_repo.update_order_totals(
+                self.order_id,
+                total_net_cost=total_cost,
+                total_calories=total_calories,
+                total_protein_g=total_protein,
+                total_carbs_g=total_carbs,
+                total_fat_g=total_fat,
+                total_sodium_mg=total_sodium_mg,
+                ratio1=r1,
+                ratio2=r2
+            )
+
             messagebox.showinfo("Success", f"Order #{self.order_id} saved")
             self.destroy()
         except ValidationError as e:
