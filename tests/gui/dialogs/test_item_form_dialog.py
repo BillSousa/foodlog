@@ -39,15 +39,19 @@ def item():
 class TestItemFormDialogPopulate:
     """Test _populate_form()."""
 
+    @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_called_on_init_with_item(
-        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, mock_tracked_repo, root, item
     ):
         """Verify _populate_form is called during __init__ when item_id provided."""
         mock_items_repo.return_value.get_item.return_value = item
+        mock_cat_repo.return_value.list_categories.return_value = []
+        mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
+        mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         form_data = {
             'name_text': 'Test Item',
             'price': '2.99',
@@ -66,15 +70,19 @@ class TestItemFormDialogPopulate:
         mock_populate.assert_called_once()
         assert mock_populate.call_args[0][0] == item
 
+    @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_sets_widget_values(
-        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, mock_tracked_repo, root, item
     ):
         """Verify _populate_form sets all widget values."""
         mock_items_repo.return_value.get_item.return_value = item
+        mock_cat_repo.return_value.list_categories.return_value = []
+        mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
+        mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         form_data = {
             'name_text': 'Rice',
             'price': '5.99',
@@ -99,16 +107,20 @@ class TestItemFormDialogPopulate:
         assert dialog.blocks_must_be_integer_var.get() is True
         assert dialog.glycemic_index_entry.get() == '70'
 
+    @patch('foodlog.gui.components.nutrition_panel.TrackedNutrientsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_glycemic_index_none(
-        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, mock_tracked_repo, root, item
     ):
         """Verify glycemic index blank when None."""
         item.glycemic_index = None
         mock_items_repo.return_value.get_item.return_value = item
+        mock_cat_repo.return_value.list_categories.return_value = []
+        mock_tracked_repo.return_value.get_tracked_nutrients.return_value = []
+        mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         form_data = {
             'name_text': 'Pasta',
             'price': '1.50',
