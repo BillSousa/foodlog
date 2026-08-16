@@ -41,9 +41,10 @@ class TestItemFormDialogPopulate:
 
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_called_on_init_with_item(
-        self, mock_populate, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
     ):
         """Verify _populate_form is called during __init__ when item_id provided."""
         mock_items_repo.return_value.get_item.return_value = item
@@ -67,9 +68,10 @@ class TestItemFormDialogPopulate:
 
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_sets_widget_values(
-        self, mock_populate, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
     ):
         """Verify _populate_form sets all widget values."""
         mock_items_repo.return_value.get_item.return_value = item
@@ -99,9 +101,10 @@ class TestItemFormDialogPopulate:
 
     @patch('foodlog.gui.dialogs.item_form_dialog.ProductNamesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.ItemsRepository')
+    @patch('foodlog.gui.dialogs.item_form_dialog.CategoriesRepository')
     @patch('foodlog.gui.dialogs.item_form_dialog.populate_item_form_data')
     def test_populate_form_glycemic_index_none(
-        self, mock_populate, mock_items_repo, mock_names_repo, root, item
+        self, mock_populate, mock_cat_repo, mock_items_repo, mock_names_repo, root, item
     ):
         """Verify glycemic index blank when None."""
         item.glycemic_index = None
