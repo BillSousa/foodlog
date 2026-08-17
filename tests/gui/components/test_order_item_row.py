@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import tkinter as tk
 
 import pytest
@@ -10,6 +10,7 @@ from foodlog.database.schema import create_schema
 from foodlog.database.migrations import migrate_schema
 from foodlog.database.seed_reference_data import seed_reference_data
 from foodlog.models.dim_items import Item
+from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.gui.components.order_item_row import OrderItemRow
 
 
@@ -35,9 +36,11 @@ def test_item(test_db: Path) -> Item:
     with patch(
         "foodlog.database.connection.get_database_path", return_value=test_db
     ):
+        product_names_repo = ProductNamesRepository()
+        name_id = product_names_repo.create_product_name("Test Product")
         return Item(
             item_id=1,
-            name_id=1,
+            name_id=name_id,
             category_id=None,
             price=5.00,
             servings_per_block=10.0,
@@ -133,3 +136,191 @@ def test_update_display_negative_coupon_stays_negative(
         # Net should be: (5.00 * 10) + 0 + 0 + (-3.00) = 47.00
         net_text = row.net_label.cget("text")
         assert net_text == "$47.00"
+
+
+def test_order_item_row_displays_product_name_not_units(
+    test_db: Path,
+) -> None:
+    """Test that OrderItemRow displays resolved product name, not item.units."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        product_names_repo = ProductNamesRepository()
+        name_id = product_names_repo.create_product_name("Red Delicious Apple")
+        item = Item(
+            item_id=1,
+            name_id=name_id,
+            category_id=None,
+            price=2.50,
+            servings_per_block=5.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            glycemic_index=None,
+            calories=50.0,
+            total_fat_g=0.3,
+            sodium_mcg=100000.0,
+            choline_mcg=0.0,
+        )
+
+        root = tk.Tk()
+        row = OrderItemRow(root, item)
+
+        # The first label in the row should display the product name,
+        # not the units
+        labels = [
+            child for child in row.frame.winfo_children()
+            if isinstance(child, tk.Label)
+        ]
+        assert len(labels) > 0
+        assert labels[0].cget("text") == "Red Delicious Apple"
+        # Verify it's not showing the units
+        assert labels[0].cget("text") != "oz"
+
+
+def test_update_price_btn_exists(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that update price button exists."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        assert row.update_price_btn is not None
+
+
+@patch('foodlog.gui.components.order_item_row.PriceUpdatePopup')
+def test_update_price_click_opens_popup(
+    mock_popup_class, test_db: Path, test_item: Item
+) -> None:
+    """Test that clicking update price button opens popup with correct params."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        row._on_update_price_click()
+
+        mock_popup_class.assert_called_once()
+        call_args = mock_popup_class.call_args
+        assert call_args[0][1] == test_item.item_id
+        assert call_args[0][2] == test_item.price
+
+
+def test_update_price_callback_updates_display(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that price callback updates item and display."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        original_price = float(row.price_var.get())
+
+        # Simulate callback
+        def on_price_saved(new_price):
+            row.item.price = new_price
+            row.price_var.set(str(new_price))
+            row.last_valid_price = str(new_price)
+            row._update_display()
+
+        on_price_saved(10.50)
+
+        assert row.item.price == 10.50
+        assert float(row.price_var.get()) == 10.50
+        assert row.last_valid_price == "10.5"
+
+
+def test_update_price_btn_disabled_when_locked(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that update price button is disabled when row is locked."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        row.set_locked(True)
+
+        assert row.update_price_btn.cget("state") == tk.DISABLED
+
+        row.set_locked(False)
+        assert row.update_price_btn.cget("state") == tk.NORMAL
+
+
+@patch('foodlog.gui.components.order_item_row.PriceUpdatePopup')
+def test_update_price_click_callback_is_callable(
+    mock_popup_class, test_db: Path, test_item: Item
+) -> None:
+    """Test that callback passed to popup is callable."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        row._on_update_price_click()
+
+        call_args = mock_popup_class.call_args
+        callback = call_args[0][3]
+        assert callable(callback)
+
+
+def test_update_price_callback_calls_on_change_callback(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that price callback invokes on_change_callback if set."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        row.on_change_callback = Mock()
+
+        # Simulate the callback from _on_update_price_click
+        def on_price_saved(new_price):
+            row.item.price = new_price
+            row.price_var.set(str(new_price))
+            row.last_valid_price = str(new_price)
+            row._update_display()
+            if row.on_change_callback:
+                row.on_change_callback()
+
+        on_price_saved(10.50)
+        row.on_change_callback.assert_called_once()
+
+
+def test_set_locked_disables_all_widgets(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that set_locked(True) disables all editable widgets."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item)
+        row.set_locked(True)
+
+        # Verify all entry/button widgets are disabled
+        assert row.blocks_entry.cget("state") == tk.DISABLED
+        assert row.servings_entry.cget("state") == tk.DISABLED
+        assert row.price_entry.cget("state") == tk.DISABLED
+        assert row.update_price_btn.cget("state") == tk.DISABLED
+        assert row.sale_entry.cget("state") == tk.DISABLED
+        assert row.discount_entry.cget("state") == tk.DISABLED
+        assert row.coupon_entry.cget("state") == tk.DISABLED
+        assert row.delete_btn.cget("state") == tk.DISABLED
+
+        # Verify all re-enabled when unlocked
+        row.set_locked(False)
+        assert row.blocks_entry.cget("state") == tk.NORMAL
+        assert row.servings_entry.cget("state") == tk.NORMAL
+        assert row.price_entry.cget("state") == tk.NORMAL
+        assert row.update_price_btn.cget("state") == tk.NORMAL
+        assert row.sale_entry.cget("state") == tk.NORMAL
+        assert row.discount_entry.cget("state") == tk.NORMAL
+        assert row.coupon_entry.cget("state") == tk.NORMAL
+        assert row.delete_btn.cget("state") == tk.NORMAL

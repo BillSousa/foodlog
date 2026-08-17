@@ -2,7 +2,9 @@ import tkinter as tk
 
 from foodlog.calculations.to_negative import to_negative
 from foodlog.gui.components.live_ratio_calculator import compute_live_ratios
+from foodlog.gui.dialogs.price_update_popup import PriceUpdatePopup
 from foodlog.models.dim_items import Item
+from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.validation.constraints import (
     ValidationError, validate_integer_blocks, validate_price
 )
@@ -20,6 +22,12 @@ class OrderItemRow:
             item: Item to add to order
         """
         self.item = item
+        product_name = ProductNamesRepository().get_product_name(
+            item.name_id
+        )
+        self.product_name = (
+            product_name.name_text if product_name else ""
+        )
         self.frame = tk.Frame(parent, relief=tk.SUNKEN, borderwidth=1)
         self.on_change_callback = None
         self._updating = False
@@ -41,6 +49,7 @@ class OrderItemRow:
         self.blocks_entry: tk.Entry | None = None
         self.servings_entry: tk.Entry | None = None
         self.price_entry: tk.Entry | None = None
+        self.update_price_btn: tk.Button | None = None
         self.sale_entry: tk.Entry | None = None
         self.discount_entry: tk.Entry | None = None
         self.coupon_entry: tk.Entry | None = None
@@ -50,7 +59,7 @@ class OrderItemRow:
 
     def _layout(self) -> None:
         """Build row layout."""
-        tk.Label(self.frame, text=self.item.units, width=20).pack(
+        tk.Label(self.frame, text=self.product_name, width=20).pack(
             side=tk.LEFT, padx=5
         )
 
@@ -66,6 +75,11 @@ class OrderItemRow:
                                     width=8)
         self.price_entry.pack(side=tk.LEFT, padx=10)
         self.price_entry.bind("<FocusOut>", self._on_price_change)
+
+        self.update_price_btn = tk.Button(
+            self.frame, text="🔧", command=self._on_update_price_click, width=2
+        )
+        self.update_price_btn.pack(side=tk.LEFT, padx=2)
 
         tk.Label(self.frame, text="Sale:").pack(side=tk.LEFT, padx=2)
         self.sale_entry = tk.Entry(self.frame, textvariable=self.sale_var,
@@ -174,6 +188,23 @@ class OrderItemRow:
         except (ValueError, ValidationError):
             self.price_var.set(self.last_valid_price)
 
+    def _on_update_price_click(self) -> None:
+        """Open price update popup for dim_items.price."""
+        def on_price_saved(new_price: float) -> None:
+            self.item.price = new_price
+            self.price_var.set(str(new_price))
+            self.last_valid_price = str(new_price)
+            self._update_display()
+            if self.on_change_callback:
+                self.on_change_callback()
+
+        PriceUpdatePopup(
+            self.frame,
+            self.item.item_id,
+            self.item.price,
+            on_price_saved,
+        )
+
     def _delete(self) -> None:
         """Delete this row."""
         self.frame.destroy()
@@ -222,6 +253,8 @@ class OrderItemRow:
             self.servings_entry.config(state=state)
         if self.price_entry:
             self.price_entry.config(state=state)
+        if self.update_price_btn:
+            self.update_price_btn.config(state=state)
         if self.sale_entry:
             self.sale_entry.config(state=state)
         if self.discount_entry:

@@ -279,3 +279,123 @@ class TestUpdateOrderLine:
             repo = OrderLinesRepository()
             with pytest.raises(ValidationError):
                 repo.update_order_line(line_id, actual_servings=6.0)
+
+    def test_update_nonexistent_line_id_is_noop(self, test_db: Path) -> None:
+        """Test that updating a nonexistent line_id is a silent no-op."""
+        with patch(
+            'foodlog.database.connection.get_database_path',
+            return_value=test_db
+        ):
+            repo = OrderLinesRepository()
+            # Should not raise, just return silently
+            repo.update_order_line(999, actual_servings=10.0)
+
+    def test_update_orphaned_line_raises_error(self, test_db: Path) -> None:
+        """Test that updating a line with missing parent order raises ValidationError."""
+        with patch(
+            'foodlog.database.connection.get_database_path',
+            return_value=test_db
+        ):
+            # Manually insert a line with nonexistent order_id (simulating
+            # data corruption or future deletion machinery)
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                '''INSERT INTO fact_order_lines
+                (order_id, item_id, servings_ordered, actual_servings,
+                 stated_price, sale, discount, coupon, net_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (999, 1, 5.0, 5.0, 10.0, 0.0, 0.0, 0.0, 50.0)
+            )
+            conn.commit()
+            orphan_line_id = cursor.lastrowid
+            conn.close()
+
+            repo = OrderLinesRepository()
+            with pytest.raises(ValidationError):
+                repo.update_order_line(orphan_line_id, actual_servings=3.0)
+
+
+class TestCreateOrderLine:
+    """Test create_order_line() method."""
+
+    def test_create_order_line(self, test_db: Path, sample_order_line: tuple[int, int]) -> None:
+        """Test creating an order line returns a line_id."""
+        order_id, _ = sample_order_line
+        with patch(
+            'foodlog.database.connection.get_database_path',
+            return_value=test_db
+        ):
+            # Create another item
+            names_repo = ProductNamesRepository()
+            name_id = names_repo.create_product_name("Another Item")
+            items_repo = ItemsRepository()
+            item = Item(
+                name_id=name_id,
+                price=3.00,
+                servings_per_block=2.0,
+                units='oz',
+                container_size=8,
+                serving_size=2,
+                calories=100.0,
+                protein_g=5.0,
+                choline_mcg=0,
+            )
+            item_id = items_repo.create_item(item)
+
+            # Create order line
+            repo = OrderLinesRepository()
+            line = OrderLine(
+                order_id=order_id,
+                item_id=item_id,
+                servings_ordered=4.0,
+                actual_servings=4.0,
+                stated_price=3.00,
+                sale=0.0,
+                discount=0.0,
+                coupon=0.0,
+                net_price=12.00,
+            )
+            line_id = repo.create_order_line(line)
+
+            assert line_id > 0
+            # Verify it was actually created
+            lines = repo.get_order_lines(order_id)
+            assert len(lines) == 2  # sample + new line
+
+
+class TestGetOrderLines:
+    """Test get_order_lines() method."""
+
+    def test_get_order_lines_returns_all_lines_for_order(
+        self, test_db: Path, sample_order_line: tuple[int, int]
+    ) -> None:
+        """Test get_order_lines returns all lines for an order."""
+        order_id, line_id = sample_order_line
+        with patch(
+            'foodlog.database.connection.get_database_path',
+            return_value=test_db
+        ):
+            repo = OrderLinesRepository()
+            lines = repo.get_order_lines(order_id)
+
+            assert len(lines) == 1
+            assert lines[0].line_id == line_id
+            assert lines[0].order_id == order_id
+
+    def test_get_order_lines_empty_order(self, test_db: Path) -> None:
+        """Test get_order_lines returns empty list for order with no lines."""
+        with patch(
+            'foodlog.database.connection.get_database_path',
+            return_value=test_db
+        ):
+            # Create an empty order
+            orders_repo = OrdersRepository()
+            order = Order(order_date="2026-08-15", is_delivery=False)
+            order_id = orders_repo.create_order(order)
+
+            repo = OrderLinesRepository()
+            lines = repo.get_order_lines(order_id)
+
+            assert len(lines) == 0
+            assert isinstance(lines, list)

@@ -7,9 +7,11 @@ import pytest
 
 from foodlog.database.connection import get_connection
 from foodlog.database.schema import create_schema
+from foodlog.database.migrations import migrate_schema
 from foodlog.database.seed_reference_data import seed_reference_data
 from foodlog.gui.windows.order_creation_window import OrderCreationWindow
 from foodlog.models.dim_items import Item
+from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.validation.constraints import ValidationError
@@ -26,6 +28,7 @@ def test_db() -> Path:
     ):
         conn = get_connection()
         create_schema(conn)
+        migrate_schema(conn)
         seed_reference_data(conn)
         conn.close()
     return db_path
@@ -315,3 +318,211 @@ def test_save_calls_update_order_totals(
                     assert call_kwargs["total_protein_g"] > 0
                     assert "ratio1" in call_kwargs
                     assert "ratio2" in call_kwargs
+
+
+def test_show_item_picker_filters_by_search_text(
+    order_creation_window: OrderCreationWindow, test_db: Path
+) -> None:
+    """Test _show_item_picker filters items by search text."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        apple_id = names_repo.create_product_name("Apple")
+        banana_id = names_repo.create_product_name("Banana")
+
+        items_repo = ItemsRepository()
+        apple = Item(
+            name_id=apple_id,
+            category_id=None,
+            price=1.00,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=52.0,
+            protein_g=0.3,
+            choline_mcg=0,
+        )
+        banana = Item(
+            name_id=banana_id,
+            category_id=None,
+            price=0.50,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=89.0,
+            protein_g=1.1,
+            choline_mcg=0,
+        )
+        items_repo.create_item(apple)
+        items_repo.create_item(banana)
+
+        order_creation_window.search_filter.search_var.set("apple")
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.tk.Toplevel'
+        ) as mock_toplevel:
+            mock_dialog = MagicMock()
+            mock_toplevel.return_value = mock_dialog
+            mock_listbox = MagicMock()
+            mock_dialog.winfo_children.return_value = []
+
+            with patch(
+                'foodlog.gui.windows.order_creation_window.tk.Listbox'
+            ) as mock_listbox_class:
+                mock_listbox_class.return_value = mock_listbox
+
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.tk.Button'
+                ):
+                    order_creation_window._show_item_picker()
+
+                    # Verify only apple was inserted into listbox
+                    assert mock_listbox.insert.call_count == 1
+                    insert_call = mock_listbox.insert.call_args
+                    assert "Apple" in insert_call[0][1]
+
+
+def test_show_item_picker_filters_by_category(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _show_item_picker filters items by selected category."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        cat_repo = CategoriesRepository()
+        cat1 = cat_repo.create_category("Fruit")
+
+        names_repo = ProductNamesRepository()
+        item1_id = names_repo.create_product_name("Item 1")
+        item2_id = names_repo.create_product_name("Item 2")
+
+        items_repo = ItemsRepository()
+        item1 = Item(
+            name_id=item1_id,
+            category_id=cat1.category_id,
+            price=1.00,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=50.0,
+            protein_g=1.0,
+            choline_mcg=0,
+        )
+        item2 = Item(
+            name_id=item2_id,
+            category_id=None,
+            price=1.00,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=50.0,
+            protein_g=1.0,
+            choline_mcg=0,
+        )
+        items_repo.create_item(item1)
+        items_repo.create_item(item2)
+
+        window = OrderCreationWindow(root)
+        window.search_filter.category_vars["Fruit"].set(True)
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.tk.Toplevel'
+        ) as mock_toplevel:
+            mock_dialog = MagicMock()
+            mock_toplevel.return_value = mock_dialog
+            mock_listbox = MagicMock()
+            mock_dialog.winfo_children.return_value = []
+
+            with patch(
+                'foodlog.gui.windows.order_creation_window.tk.Listbox'
+            ) as mock_listbox_class:
+                mock_listbox_class.return_value = mock_listbox
+
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.tk.Button'
+                ):
+                    window._show_item_picker()
+
+                    # Only item1 should be inserted (it's in the selected cat)
+                    assert mock_listbox.insert.call_count == 1
+                    insert_call = mock_listbox.insert.call_args
+                    assert "Item 1" in insert_call[0][1]
+
+
+def test_show_item_picker_combines_search_and_category(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _show_item_picker applies both search and category filters."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        cat_repo = CategoriesRepository()
+        cat1 = cat_repo.create_category("Fruit")
+
+        names_repo = ProductNamesRepository()
+        apple_id = names_repo.create_product_name("Apple")
+        apple_pie_id = names_repo.create_product_name("Apple Pie")
+
+        items_repo = ItemsRepository()
+        apple = Item(
+            name_id=apple_id,
+            category_id=cat1.category_id,
+            price=1.00,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=50.0,
+            protein_g=1.0,
+            choline_mcg=0,
+        )
+        apple_pie = Item(
+            name_id=apple_pie_id,
+            category_id=None,
+            price=5.00,
+            servings_per_block=1.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=200.0,
+            protein_g=2.0,
+            choline_mcg=0,
+        )
+        items_repo.create_item(apple)
+        items_repo.create_item(apple_pie)
+
+        window = OrderCreationWindow(root)
+        window.search_filter.search_var.set("apple")
+        window.search_filter.category_vars["Fruit"].set(True)
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.tk.Toplevel'
+        ) as mock_toplevel:
+            mock_dialog = MagicMock()
+            mock_toplevel.return_value = mock_dialog
+            mock_listbox = MagicMock()
+            mock_dialog.winfo_children.return_value = []
+
+            with patch(
+                'foodlog.gui.windows.order_creation_window.tk.Listbox'
+            ) as mock_listbox_class:
+                mock_listbox_class.return_value = mock_listbox
+
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.tk.Button'
+                ):
+                    window._show_item_picker()
+
+                    # Only Apple matches both search AND category
+                    assert mock_listbox.insert.call_count == 1
+                    insert_call = mock_listbox.insert.call_args
+                    assert "Apple" in insert_call[0][1]
+                    assert "Apple Pie" not in insert_call[0][1]

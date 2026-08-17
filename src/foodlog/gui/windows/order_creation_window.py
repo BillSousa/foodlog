@@ -6,10 +6,13 @@ from foodlog.gui.components.live_ratio_calculator import compute_live_ratios
 from foodlog.gui.components.order_header import OrderHeader
 from foodlog.gui.components.order_item_row import OrderItemRow
 from foodlog.gui.components.order_totals import OrderTotals
+from foodlog.gui.helpers.item_filter import filter_items
 from foodlog.models.fact_order_lines import OrderLine
 from foodlog.models.fact_orders import Order
+from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.orders_repository import OrdersRepository
+from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.repository.settings_repository import SettingsRepository
 from foodlog.validation.constraints import ValidationError
 
@@ -85,15 +88,32 @@ class OrderCreationWindow(tk.Toplevel):
 
     def _show_item_picker(self) -> None:
         """Show item picker dialog."""
+        items_repo = ItemsRepository()
+        items = items_repo.list_active_items()
+
         search_text = self.search_filter.get_search_text()
-        repo = ItemsRepository()
+        selected_category_names = (
+            self.search_filter.get_selected_categories()
+        )
 
-        if search_text:
-            items = repo.search_items(search_text)
-        else:
-            items = repo.list_active_items()
+        categories_repo = CategoriesRepository()
+        categories = categories_repo.list_categories()
+        category_name_to_id = {
+            cat.category_name: cat.category_id
+            for cat in categories
+        }
+        selected_category_ids = [
+            category_name_to_id[name]
+            for name in selected_category_names
+            if name in category_name_to_id
+        ]
 
-        if not items:
+        product_names_repo = ProductNamesRepository()
+        filtered_items = filter_items(
+            items, search_text, selected_category_ids, product_names_repo
+        )
+
+        if not filtered_items:
             messagebox.showwarning("No items", "No items found")
             return
 
@@ -104,14 +124,16 @@ class OrderCreationWindow(tk.Toplevel):
         listbox = tk.Listbox(dialog, height=12)
         listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        for item in items:
-            text = f"{item.units} — ${item.price:.2f}"
+        for item in filtered_items:
+            product_name = product_names_repo.get_product_name(item.name_id)
+            name_text = product_name.name_text if product_name else ""
+            text = f"{name_text} — ${item.price:.2f}"
             listbox.insert(tk.END, text)
 
         def add_selected():
             selection = listbox.curselection()
             if selection:
-                item = items[selection[0]]
+                item = filtered_items[selection[0]]
                 self._add_item_row(item)
                 dialog.destroy()
 

@@ -85,3 +85,52 @@ class TestComputeLiveRatios:
         # Dense > sparse for both ratios
         assert r1_dense > r1_sparse
         assert r2_dense > r2_sparse
+
+    def test_sodium_mcg_to_mg_conversion_accuracy(self) -> None:
+        """Verify sodium_mcg is exactly divided by 1000 to get mg."""
+        # 1000 mcg = 1 mg, 1_000_000 mcg = 1000 mg
+        r1_low_sodium, _ = compute_live_ratios(
+            calories=500.0,
+            cost=5.0,
+            sodium_mcg=1000.0,
+            fat_g=15.0
+        )
+        r1_high_sodium, _ = compute_live_ratios(
+            calories=500.0,
+            cost=5.0,
+            sodium_mcg=1_000_000.0,
+            fat_g=15.0
+        )
+        # 1000x more sodium → much lower ratio
+        assert r1_low_sodium > r1_high_sodium
+
+    def test_calories_affects_both_ratios(self) -> None:
+        """Verify calories parameter affects both ratio1 and ratio2."""
+        r1_low, r2_low = compute_live_ratios(
+            calories=100.0,
+            cost=5.0,
+            sodium_mcg=2_300_000.0,
+            fat_g=15.0
+        )
+        r1_high, r2_high = compute_live_ratios(
+            calories=1000.0,
+            cost=5.0,
+            sodium_mcg=2_300_000.0,
+            fat_g=15.0
+        )
+        # Higher calories → higher ratios
+        assert r1_high > r1_low
+        assert r2_high > r2_low
+
+    def test_return_type_is_tuple_of_floats(self) -> None:
+        """Verify return type is tuple[float, float]."""
+        result = compute_live_ratios(
+            calories=500.0,
+            cost=5.0,
+            sodium_mcg=2_300_000.0,
+            fat_g=15.0
+        )
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert isinstance(result[0], float)
+        assert isinstance(result[1], float)

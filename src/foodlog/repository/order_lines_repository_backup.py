@@ -1,8 +1,6 @@
 from foodlog.database.connection import get_connection
 from foodlog.models.fact_order_lines import OrderLine
-from foodlog.validation.constraints import (
-    ValidationError, validate_order_editable
-)
+from foodlog.validation.constraints import validate_order_editable
 
 
 class OrderLinesRepository:
@@ -108,14 +106,9 @@ class OrderLinesRepository:
         order_row = cursor.fetchone()
         conn.close()
 
-        if not order_row:
-            raise ValidationError(
-                f"Order {order_id} not found for line {line_id}. "
-                "Cannot update line without valid parent order."
-            )
-
-        order_status = order_row['status']
-        validate_order_editable(order_status)
+        if order_row:
+            order_status = order_row['status']
+            validate_order_editable(order_status)
 
         fields_to_update = []
         values = []
