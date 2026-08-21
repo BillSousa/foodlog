@@ -11,9 +11,13 @@ from foodlog.database.migrations import migrate_schema
 from foodlog.database.seed_reference_data import seed_reference_data
 from foodlog.gui.windows.order_creation_window import OrderCreationWindow
 from foodlog.models.dim_items import Item
+from foodlog.models.fact_orders import Order
+from foodlog.models.fact_order_lines import OrderLine
 from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
+from foodlog.repository.orders_repository import OrdersRepository
+from foodlog.repository.order_lines_repository import OrderLinesRepository
 from foodlog.validation.constraints import ValidationError
 
 
@@ -526,3 +530,569 @@ def test_show_item_picker_combines_search_and_category(
                     insert_call = mock_listbox.insert.call_args
                     assert "Apple" in insert_call[0][1]
                     assert "Apple Pie" not in insert_call[0][1]
+
+
+def test_window_title_new_order(root: tk.Tk, test_db: Path) -> None:
+    """Test window title is 'Create Order' when order_id is None."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        window = OrderCreationWindow(root, order_id=None)
+        assert window.title() == "Create Order"
+
+
+def test_window_title_edit_order(root: tk.Tk, test_db: Path) -> None:
+    """Test window title is 'Edit Order #{order_id}' when order_id provided."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-20",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        window = OrderCreationWindow(root, order_id=order_id)
+        assert window.title() == f"Edit Order #{order_id}"
+
+
+def test_load_existing_order_populates_header(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _load_existing_order populates header fields."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-19",
+            is_delivery=1,
+            status="ordered",
+            delivery_charge=5.50,
+            tip=2.00,
+            tax=3.25,
+            order_level_coupon=-1.50
+        )
+        order_id = orders_repo.create_order(order)
+
+        window = OrderCreationWindow(root, order_id=order_id)
+
+        header_values = window.header.get_values()
+        assert header_values["order_date"] == "2026-08-19"
+        assert header_values["is_delivery"] == 1
+        assert header_values["status"] == "ordered"
+        assert header_values["delivery_charge"] == 5.50
+        assert header_values["tip"] == 2.00
+        assert header_values["tax"] == 3.25
+        assert header_values["order_level_coupon"] == -1.50
+
+
+def test_load_existing_order_loads_order_lines(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _load_existing_order loads all order lines with items."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        # Create item
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=10.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=100.0,
+            protein_g=5.0,
+            choline_mcg=0,
+        )
+        item_id = items_repo.create_item(item)
+
+        # Create order
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-18",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        # Create order line
+        lines_repo = OrderLinesRepository()
+        line = OrderLine(
+            order_id=order_id,
+            item_id=item_id,
+            servings_ordered=20.0,
+            actual_servings=20.0,
+            stated_price=5.00,
+            sale=-1.00,
+            discount=0.0,
+            coupon=0.0,
+            net_price=99.00
+        )
+        lines_repo.create_order_line(line)
+
+        # Load order in window
+        window = OrderCreationWindow(root, order_id=order_id)
+
+        # Should have one item row
+        assert len(window.order_items) == 1
+        row = window.order_items[0]["row"]
+        # Check that line_id is set (indicating existing line)
+        assert row.line_id is not None
+
+
+def test_load_existing_order_applies_reconciled_lock(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _load_existing_order applies lock when status is reconciled."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        # Create order with reconciled status
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-17",
+            is_delivery=0,
+            status="reconciled"
+        )
+        order_id = orders_repo.create_order(order)
+
+        window = OrderCreationWindow(root, order_id=order_id)
+
+        # Header widgets should be locked
+        assert (
+            window.header.date_entry.cget("state") == tk.DISABLED
+        )
+        assert (
+            window.header.is_delivery_check.cget("state") == tk.DISABLED
+        )
+        # Add button should be locked
+        assert window.add_item_btn.cget("state") == tk.DISABLED
+
+
+def test_load_existing_order_doesnt_lock_for_planning(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _load_existing_order doesn't lock if status is not reconciled."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-16",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        window = OrderCreationWindow(root, order_id=order_id)
+
+        # Header widgets should be enabled
+        assert window.header.date_entry.cget("state") == tk.NORMAL
+        assert (
+            window.header.is_delivery_check.cget("state") == tk.NORMAL
+        )
+        # Add button should be enabled
+        assert window.add_item_btn.cget("state") == tk.NORMAL
+
+
+def test_add_item_row_with_existing_line(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _add_item_row with existing_line populates row from line data."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        # Create item
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=10.0,
+            units='oz',
+            container_size=100,
+            serving_size=10,
+            calories=100.0,
+            protein_g=5.0,
+            choline_mcg=0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        window = OrderCreationWindow(root)
+
+        # Create order line to pass to _add_item_row
+        existing_line = OrderLine(
+            line_id=99,
+            order_id=1,
+            item_id=item_id,
+            servings_ordered=25.0,
+            actual_servings=25.0,
+            stated_price=6.50,
+            sale=-1.00,
+            discount=-0.50,
+            coupon=-0.25,
+            net_price=156.25
+        )
+
+        window._add_item_row(item, existing_line=existing_line)
+
+        row = window.order_items[0]["row"]
+        # Check that line_id is set from existing_line
+        assert row.line_id == 99
+        # Check that fields are populated from existing_line
+        assert float(row.price_var.get()) == 6.50
+        assert float(row.servings_var.get()) == 25.0
+        assert float(row.sale_var.get()) == -1.00
+        assert float(row.discount_var.get()) == -0.50
+        assert float(row.coupon_var.get()) == -0.25
+
+
+def test_save_new_order_calls_create_order(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _save() calls create_order when creating new order."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=20.0,
+            total_fat_g=5.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        window = OrderCreationWindow(root)
+        assert window.order_id is None
+
+        window._add_item_row(item)
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(window, 'destroy'):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                ) as mock_orders_repo_class:
+                    mock_repo = MagicMock()
+                    mock_repo.create_order.return_value = 42
+                    mock_orders_repo_class.return_value = mock_repo
+
+                    window._save()
+
+                    # Verify create_order was called (not update_order_header)
+                    mock_repo.create_order.assert_called_once()
+                    assert window.order_id == 42
+
+
+def test_save_existing_order_calls_update_header(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _save() calls update_order_header when editing existing order."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=20.0,
+            total_fat_g=5.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        # Create an order first
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-15",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        # Load it in the window (which sets self.order_id)
+        window = OrderCreationWindow(root, order_id=order_id)
+        assert window.order_id == order_id
+
+        window._add_item_row(item)
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(window, 'destroy'):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                ) as mock_orders_repo_class:
+                    mock_repo = MagicMock()
+                    mock_orders_repo_class.return_value = mock_repo
+
+                    window._save()
+
+                    # Verify update_order_header was called (not create_order)
+                    mock_repo.update_order_header.assert_called_once()
+                    mock_repo.create_order.assert_not_called()
+
+
+def test_save_new_line_calls_create_order_line(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _save() calls create_order_line for rows with no line_id."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=20.0,
+            total_fat_g=5.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        window = OrderCreationWindow(root)
+        window._add_item_row(item)
+
+        # Verify line_id is None
+        assert window.order_items[0]["row"].line_id is None
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(window, 'destroy'):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrderLinesRepository'
+                ) as mock_lines_repo_class:
+                    mock_lines_repo = MagicMock()
+                    mock_lines_repo_class.return_value = mock_lines_repo
+
+                    with patch(
+                        'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                    ) as mock_orders_repo_class:
+                        mock_orders_repo = MagicMock()
+                        mock_orders_repo.create_order.return_value = 99
+                        mock_orders_repo_class.return_value = mock_orders_repo
+
+                        window._save()
+
+                        # Verify create_order_line was called
+                        mock_lines_repo.create_order_line.assert_called_once()
+                        mock_lines_repo.update_order_line.assert_not_called()
+
+
+def test_save_existing_line_calls_update_order_line(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _save() calls update_order_line for rows with line_id."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=20.0,
+            total_fat_g=5.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        # Create an order with a line
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-14",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        lines_repo = OrderLinesRepository()
+        line = OrderLine(
+            order_id=order_id,
+            item_id=item_id,
+            servings_ordered=20.0,
+            actual_servings=20.0,
+            stated_price=5.00,
+            sale=0.0,
+            discount=0.0,
+            coupon=0.0,
+            net_price=100.00
+        )
+        lines_repo.create_order_line(line)
+
+        # Load order in window
+        window = OrderCreationWindow(root, order_id=order_id)
+
+        # Verify line_id is set
+        assert window.order_items[0]["row"].line_id is not None
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(window, 'destroy'):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrderLinesRepository'
+                ) as mock_lines_repo_class:
+                    mock_lines_repo = MagicMock()
+                    mock_lines_repo_class.return_value = mock_lines_repo
+
+                    with patch(
+                        'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                    ) as mock_orders_repo_class:
+                        mock_orders_repo = MagicMock()
+                        mock_orders_repo_class.return_value = mock_orders_repo
+
+                        window._save()
+
+                        # Verify update_order_line was called
+                        mock_lines_repo.update_order_line.assert_called_once()
+                        mock_lines_repo.create_order_line.assert_not_called()
+
+
+def test_save_update_order_line_passes_correct_fields(
+    root: tk.Tk, test_db: Path
+) -> None:
+    """Test _save() passes correct fields to update_order_line."""
+    with patch(
+        'foodlog.database.connection.get_database_path',
+        return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        name_id = names_repo.create_product_name("Test Item")
+        items_repo = ItemsRepository()
+        item = Item(
+            name_id=name_id,
+            price=5.00,
+            servings_per_block=4.0,
+            units='oz',
+            container_size=16,
+            serving_size=4,
+            calories=200.0,
+            protein_g=10.0,
+            total_carbs_g=20.0,
+            total_fat_g=5.0,
+            sodium_mcg=500.0,
+        )
+        item_id = items_repo.create_item(item)
+        item.item_id = item_id
+
+        # Create an order with a line
+        orders_repo = OrdersRepository()
+        order = Order(
+            order_date="2026-08-13",
+            is_delivery=0,
+            status="planning"
+        )
+        order_id = orders_repo.create_order(order)
+
+        lines_repo = OrderLinesRepository()
+        line = OrderLine(
+            order_id=order_id,
+            item_id=item_id,
+            servings_ordered=20.0,
+            actual_servings=20.0,
+            stated_price=5.00,
+            sale=0.0,
+            discount=0.0,
+            coupon=0.0,
+            net_price=100.00
+        )
+        lines_repo.create_order_line(line)
+
+        # Load order in window
+        window = OrderCreationWindow(root, order_id=order_id)
+        line_id = window.order_items[0]["row"].line_id
+
+        # Modify the row values
+        window.order_items[0]["row"].servings_var.set("25.0")
+        window.order_items[0]["row"].price_var.set("6.50")
+        window.order_items[0]["row"].sale_var.set("-1.00")
+        window.order_items[0]["row"].discount_var.set("-0.50")
+        window.order_items[0]["row"].coupon_var.set("-0.25")
+
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            with patch.object(window, 'destroy'):
+                with patch(
+                    'foodlog.gui.windows.order_creation_window.OrderLinesRepository'
+                ) as mock_lines_repo_class:
+                    mock_lines_repo = MagicMock()
+                    mock_lines_repo_class.return_value = mock_lines_repo
+
+                    with patch(
+                        'foodlog.gui.windows.order_creation_window.OrdersRepository'
+                    ) as mock_orders_repo_class:
+                        mock_orders_repo = MagicMock()
+                        mock_orders_repo_class.return_value = mock_orders_repo
+
+                        window._save()
+
+                        # Verify update_order_line was called with correct args
+                        mock_lines_repo.update_order_line.assert_called_once()
+                        call_args = mock_lines_repo.update_order_line.call_args
+                        assert call_args[1]["line_id"] == line_id
+                        assert call_args[1]["actual_servings"] == 25.0
+                        assert call_args[1]["stated_price"] == 6.50
+                        assert call_args[1]["sale"] == -1.00
+                        assert call_args[1]["discount"] == -0.50
+                        assert call_args[1]["coupon"] == -0.25

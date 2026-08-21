@@ -3,6 +3,7 @@ import tkinter as tk
 import pytest
 
 from foodlog.gui.components.order_header import OrderHeader
+from foodlog.models.fact_orders import Order
 
 
 @pytest.fixture
@@ -15,6 +16,29 @@ def root() -> tk.Tk:
 def order_header(root: tk.Tk) -> OrderHeader:
     """Create an OrderHeader widget."""
     return OrderHeader(root)
+
+
+@pytest.fixture
+def sample_order() -> Order:
+    """Create a sample order for testing."""
+    return Order(
+        order_id=1,
+        order_date="2026-08-15",
+        is_delivery=1,
+        status="ordered",
+        delivery_charge=5.50,
+        tip=2.00,
+        tax=3.25,
+        order_level_coupon=-1.50,
+        total_net_cost=45.99,
+        total_calories=500.0,
+        total_protein_g=25.0,
+        total_carbs_g=60.0,
+        total_fat_g=15.0,
+        total_sodium_mg=2300.0,
+        ratio1=10.5,
+        ratio2=8.3,
+    )
 
 
 def test_get_values_returns_dict(order_header: OrderHeader) -> None:
@@ -107,3 +131,72 @@ def test_get_values_money_fields_are_floats(
     assert values["delivery_charge"] == 9.99
     assert values["tip"] == 5.0
     assert values["tax"] == 2.1
+
+
+def test_set_values_populates_all_fields(
+    order_header: OrderHeader, sample_order: Order
+) -> None:
+    """Test set_values populates all header fields from an order."""
+    order_header.set_values(sample_order)
+    values = order_header.get_values()
+    assert values["order_date"] == "2026-08-15"
+    assert values["is_delivery"] == 1
+    assert values["status"] == "ordered"
+    assert values["delivery_charge"] == 5.50
+    assert values["tip"] == 2.00
+    assert values["tax"] == 3.25
+    assert values["order_level_coupon"] == -1.50
+
+
+def test_set_values_with_planning_status(
+    order_header: OrderHeader,
+) -> None:
+    """Test set_values with planning status."""
+    order = Order(
+        order_id=2,
+        order_date="2026-08-16",
+        is_delivery=0,
+        status="planning",
+        delivery_charge=0.0,
+        tip=0.0,
+        tax=0.0,
+        order_level_coupon=0.0,
+        total_net_cost=20.0,
+        total_calories=300.0,
+        total_protein_g=10.0,
+        total_carbs_g=40.0,
+        total_fat_g=8.0,
+        total_sodium_mg=1500.0,
+        ratio1=5.0,
+        ratio2=4.0,
+    )
+    order_header.set_values(order)
+    values = order_header.get_values()
+    assert values["status"] == "planning"
+    assert values["is_delivery"] == 0
+
+
+def test_set_values_with_reconciled_status(
+    order_header: OrderHeader,
+) -> None:
+    """Test set_values with reconciled status."""
+    order = Order(
+        order_id=3,
+        order_date="2026-08-10",
+        is_delivery=1,
+        status="reconciled",
+        delivery_charge=7.00,
+        tip=3.50,
+        tax=4.50,
+        order_level_coupon=-2.00,
+        total_net_cost=60.0,
+        total_calories=600.0,
+        total_protein_g=30.0,
+        total_carbs_g=70.0,
+        total_fat_g=20.0,
+        total_sodium_mg=2500.0,
+        ratio1=12.0,
+        ratio2=9.5,
+    )
+    order_header.set_values(order)
+    assert order_header.status_var.get() == "reconciled"

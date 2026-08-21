@@ -3,6 +3,7 @@ import tkinter.ttk
 from datetime import datetime
 
 from foodlog.calculations.to_negative import to_negative
+from foodlog.models.fact_orders import Order
 
 
 class OrderHeader:
@@ -91,6 +92,22 @@ class OrderHeader:
                 float(self.order_level_coupon_var.get())
             ),
         }
+
+    def set_values(self, order: Order) -> None:
+        """Populate header fields from a saved order.
+
+        Parameters
+        ----------
+        order : Order
+            The order to load values from.
+        """
+        self.order_date_var.set(order.order_date)
+        self.is_delivery_var.set(bool(order.is_delivery))
+        self.status_var.set(order.status)
+        self.delivery_charge_var.set(str(order.delivery_charge))
+        self.tip_var.set(str(order.tip))
+        self.tax_var.set(str(order.tax))
+        self.order_level_coupon_var.set(str(order.order_level_coupon))
 
     def set_locked(self, locked: bool) -> None:
         """Disable/enable editable widgets (except status).

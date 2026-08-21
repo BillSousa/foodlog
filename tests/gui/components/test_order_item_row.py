@@ -10,6 +10,7 @@ from foodlog.database.schema import create_schema
 from foodlog.database.migrations import migrate_schema
 from foodlog.database.seed_reference_data import seed_reference_data
 from foodlog.models.dim_items import Item
+from foodlog.models.fact_order_lines import OrderLine
 from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.gui.components.order_item_row import OrderItemRow
 
@@ -55,6 +56,23 @@ def test_item(test_db: Path) -> Item:
             sodium_mcg=500000.0,
             choline_mcg=0.0,
         )
+
+
+@pytest.fixture
+def sample_order_line() -> OrderLine:
+    """Create a sample order line for testing."""
+    return OrderLine(
+        line_id=42,
+        order_id=1,
+        item_id=1,
+        servings_ordered=25.0,
+        actual_servings=25.0,
+        stated_price=6.50,
+        sale=-1.00,
+        discount=-0.50,
+        coupon=-0.25,
+        net_price=156.25,
+    )
 
 
 def test_get_values_positive_sale_forced_negative(
@@ -324,3 +342,76 @@ def test_set_locked_disables_all_widgets(
         assert row.discount_entry.cget("state") == tk.NORMAL
         assert row.coupon_entry.cget("state") == tk.NORMAL
         assert row.delete_btn.cget("state") == tk.NORMAL
+
+
+def test_existing_line_none_uses_item_defaults(
+    test_db: Path, test_item: Item
+) -> None:
+    """Test that existing_line=None uses item defaults."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(root, test_item, existing_line=None)
+
+        assert row.line_id is None
+        assert float(row.price_var.get()) == 5.00
+        assert float(row.blocks_var.get()) == 1.0
+        assert float(row.servings_var.get()) == 10.0
+        assert float(row.sale_var.get()) == 0.0
+        assert float(row.discount_var.get()) == 0.0
+        assert float(row.coupon_var.get()) == 0.0
+
+
+def test_existing_line_populates_all_fields(
+    test_db: Path, test_item: Item, sample_order_line: OrderLine
+) -> None:
+    """Test that existing_line populates all fields correctly."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(
+            root, test_item, existing_line=sample_order_line
+        )
+
+        assert row.line_id == 42
+        assert float(row.price_var.get()) == 6.50
+        assert float(row.servings_var.get()) == 25.0
+        assert float(row.sale_var.get()) == -1.00
+        assert float(row.discount_var.get()) == -0.50
+        assert float(row.coupon_var.get()) == -0.25
+
+
+def test_existing_line_calculates_blocks_from_servings(
+    test_db: Path, test_item: Item, sample_order_line: OrderLine
+) -> None:
+    """Test that blocks are calculated from actual_servings."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(
+            root, test_item, existing_line=sample_order_line
+        )
+
+        # sample_order_line has actual_servings=25.0
+        # test_item has servings_per_block=10.0
+        # so blocks should be 25.0 / 10.0 = 2.5
+        assert float(row.blocks_var.get()) == 2.5
+
+
+def test_existing_line_sets_last_valid_values(
+    test_db: Path, test_item: Item, sample_order_line: OrderLine
+) -> None:
+    """Test that last_valid_price and last_valid_blocks are initialized."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        root = tk.Tk()
+        row = OrderItemRow(
+            root, test_item, existing_line=sample_order_line
+        )
+
+        assert row.last_valid_price == "6.5"
+        assert float(row.last_valid_blocks) == 2.5

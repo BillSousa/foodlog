@@ -4,6 +4,7 @@ from foodlog.calculations.to_negative import to_negative
 from foodlog.gui.components.live_ratio_calculator import compute_live_ratios
 from foodlog.gui.dialogs.price_update_popup import PriceUpdatePopup
 from foodlog.models.dim_items import Item
+from foodlog.models.fact_order_lines import OrderLine
 from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.validation.constraints import (
     ValidationError, validate_integer_blocks, validate_price
@@ -13,13 +14,19 @@ from foodlog.validation.constraints import (
 class OrderItemRow:
     """Single order item row with live calculations."""
 
-    def __init__(self, parent: tk.Widget, item: Item) -> None:
+    def __init__(
+        self,
+        parent: tk.Widget,
+        item: Item,
+        existing_line: OrderLine | None = None
+    ) -> None:
         """
         Initialize order item row.
 
         Args:
             parent: Parent widget
             item: Item to add to order
+            existing_line: Optional existing order line for reopening/editing
         """
         self.item = item
         product_name = ProductNamesRepository().get_product_name(
@@ -31,17 +38,39 @@ class OrderItemRow:
         self.frame = tk.Frame(parent, relief=tk.SUNKEN, borderwidth=1)
         self.on_change_callback = None
         self._updating = False
-
-        self.blocks_var = tk.StringVar(value="1")
-        self.servings_var = tk.StringVar(value=str(item.servings_per_block))
-        self.sale_var = tk.StringVar(value="0")
-        self.discount_var = tk.StringVar(value="0")
-        self.coupon_var = tk.StringVar(value="0")
-
         self.servings_per_block = item.servings_per_block
-        self.last_valid_blocks = "1"
-        self.price_var = tk.StringVar(value=str(item.price))
-        self.last_valid_price = str(item.price)
+
+        self.line_id = existing_line.line_id if existing_line else None
+
+        if existing_line:
+            self.price_var = tk.StringVar(
+                value=str(existing_line.stated_price)
+            )
+            self.last_valid_price = str(existing_line.stated_price)
+            blocks_value = (
+                existing_line.actual_servings / self.servings_per_block
+            )
+            self.blocks_var = tk.StringVar(value=str(blocks_value))
+            self.last_valid_blocks = str(blocks_value)
+            self.servings_var = tk.StringVar(
+                value=str(existing_line.actual_servings)
+            )
+            self.sale_var = tk.StringVar(value=str(existing_line.sale))
+            self.discount_var = tk.StringVar(
+                value=str(existing_line.discount)
+            )
+            self.coupon_var = tk.StringVar(value=str(existing_line.coupon))
+        else:
+            self.blocks_var = tk.StringVar(value="1")
+            self.servings_var = tk.StringVar(
+                value=str(item.servings_per_block)
+            )
+            self.sale_var = tk.StringVar(value="0")
+            self.discount_var = tk.StringVar(value="0")
+            self.coupon_var = tk.StringVar(value="0")
+            self.price_var = tk.StringVar(value=str(item.price))
+            self.last_valid_blocks = "1"
+            self.last_valid_price = str(item.price)
 
         self.blocks_var.trace_add("write", self._on_blocks_change)
         self.servings_var.trace_add("write", self._on_servings_change)

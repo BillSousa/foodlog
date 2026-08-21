@@ -47,9 +47,10 @@ class PriceUpdatePopup(tk.Toplevel):
         frame.pack(fill=tk.BOTH, expand=True)
 
         tk.Label(frame, text="Current Price:").pack(anchor=tk.W, pady=5)
-        tk.Label(frame, text=f"${self.current_price:.2f}").pack(
-            anchor=tk.W, pady=5
+        self.price_label = tk.Label(
+            frame, text=f"${self.current_price:.2f}"
         )
+        self.price_label.pack(anchor=tk.W, pady=5)
 
         tk.Label(frame, text="New Price:").pack(anchor=tk.W, pady=5)
         self.price_entry = tk.Entry(frame, width=15)

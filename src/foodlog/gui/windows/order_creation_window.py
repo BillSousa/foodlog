@@ -11,6 +11,7 @@ from foodlog.models.fact_order_lines import OrderLine
 from foodlog.models.fact_orders import Order
 from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.items_repository import ItemsRepository
+from foodlog.repository.order_lines_repository import OrderLinesRepository
 from foodlog.repository.orders_repository import OrdersRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.repository.settings_repository import SettingsRepository
@@ -20,21 +21,73 @@ from foodlog.validation.constraints import ValidationError
 class OrderCreationWindow(tk.Toplevel):
     """Order creation and planning screen."""
 
-    def __init__(self, parent: tk.Widget) -> None:
-        """Initialize order creation window."""
+    def __init__(
+        self, parent: tk.Widget, order_id: int | None = None
+    ) -> None:
+        """Initialize order creation window.
+
+        Args:
+            parent: Parent widget
+            order_id: Optional order_id to load and edit existing order
+        """
         super().__init__(parent)
-        self.title("Create Order")
         self.geometry("900x700")
 
         self.order_items: list[dict] = []
-        self.order_id: int | None = None
+        self.order_id: int | None = order_id
+        self.existing_order: Order | None = None
 
         settings_repo = SettingsRepository()
         cal_target = float(
             settings_repo.get_setting("cal_per_day_target") or "2000"
         )
 
+        if order_id:
+            self.title(f"Edit Order #{order_id}")
+        else:
+            self.title("Create Order")
+
         self._layout(cal_target)
+
+        # Load existing order if order_id provided
+        if order_id:
+            self._load_existing_order(order_id, cal_target)
+
+    def _load_existing_order(self, order_id: int, cal_target: float) -> None:
+        """Load existing order and populate form.
+
+        Parameters
+        ----------
+        order_id : int
+            Order to load
+        cal_target : float
+            Daily calorie target for display
+        """
+        orders_repo = OrdersRepository()
+        order = orders_repo.get_order(order_id)
+        if not order:
+            messagebox.showerror("Error", f"Order #{order_id} not found")
+            self.destroy()
+            return
+
+        self.existing_order = order
+
+        # Populate header with order data
+        self.header.set_values(order)
+
+        # Load and populate order lines
+        lines_repo = OrderLinesRepository()
+        order_lines = lines_repo.get_order_lines(order_id)
+        items_repo = ItemsRepository()
+
+        for line in order_lines:
+            item = items_repo.get_item(line.item_id)
+            if item:
+                self._add_item_row(item, existing_line=line)
+
+        # Lock interface if order is reconciled
+        if order.status == "reconciled":
+            self._set_locked(True)
 
     def _layout(self, cal_target: float) -> None:
         """Build order creation layout."""
@@ -140,9 +193,19 @@ class OrderCreationWindow(tk.Toplevel):
         btn = tk.Button(dialog, text="Add Item", command=add_selected)
         btn.pack(pady=10)
 
-    def _add_item_row(self, item) -> None:
-        """Add item row to order grid."""
-        row = OrderItemRow(self.items_frame, item)
+    def _add_item_row(
+        self, item, existing_line: OrderLine | None = None
+    ) -> None:
+        """Add item row to order grid.
+
+        Parameters
+        ----------
+        item : Item
+            The item to add
+        existing_line : OrderLine | None
+            Optional existing line for reopening/editing
+        """
+        row = OrderItemRow(self.items_frame, item, existing_line)
         row.on_change_callback = self._update_totals
         row.get_frame().pack(fill=tk.X, pady=2)
 
@@ -202,35 +265,62 @@ class OrderCreationWindow(tk.Toplevel):
             return
 
         header = self.header.get_values()
-        order = Order(
-            order_date=header["order_date"],
-            is_delivery=header["is_delivery"],
-            status="planning"
-        )
 
         try:
             orders_repo = OrdersRepository()
-            self.order_id = orders_repo.create_order(order)
+            lines_repo = OrderLinesRepository()
 
+            # Create or update order header
+            if self.order_id:
+                # Editing existing order: update header
+                orders_repo.update_order_header(
+                    self.order_id,
+                    order_date=header["order_date"],
+                    is_delivery=bool(header["is_delivery"]),
+                    delivery_charge=header["delivery_charge"],
+                    tip=header["tip"],
+                    tax=header["tax"],
+                    order_level_coupon=header["order_level_coupon"]
+                )
+            else:
+                # Creating new order
+                order = Order(
+                    order_date=header["order_date"],
+                    is_delivery=header["is_delivery"],
+                    status="planning"
+                )
+                self.order_id = orders_repo.create_order(order)
+
+            # Create or update each line
             for entry in self.order_items:
                 values = entry["row"].get_values()
                 if values:
-                    line = OrderLine(
-                        order_id=self.order_id,
-                        item_id=values["item_id"],
-                        servings_ordered=values["servings_ordered"],
-                        actual_servings=values["actual_servings"],
-                        stated_price=values["stated_price"],
-                        sale=values["sale"],
-                        discount=values["discount"],
-                        coupon=values["coupon"],
-                        net_price=values["net_price"],
-                    )
-                    from foodlog.repository.order_lines_repository import (
-                        OrderLinesRepository,
-                    )
-                    lines_repo = OrderLinesRepository()
-                    lines_repo.create_order_line(line)
+                    line_id = entry["row"].line_id
+                    if line_id:
+                        # Updating existing line
+                        lines_repo.update_order_line(
+                            line_id=line_id,
+                            actual_servings=values["actual_servings"],
+                            stated_price=values["stated_price"],
+                            sale=values["sale"],
+                            discount=values["discount"],
+                            coupon=values["coupon"],
+                            net_price=values["net_price"]
+                        )
+                    else:
+                        # Creating new line
+                        line = OrderLine(
+                            order_id=self.order_id,
+                            item_id=values["item_id"],
+                            servings_ordered=values["servings_ordered"],
+                            actual_servings=values["actual_servings"],
+                            stated_price=values["stated_price"],
+                            sale=values["sale"],
+                            discount=values["discount"],
+                            coupon=values["coupon"],
+                            net_price=values["net_price"],
+                        )
+                        lines_repo.create_order_line(line)
 
             # Calculate and update order-level totals from all line items
             total_cost = 0.0
