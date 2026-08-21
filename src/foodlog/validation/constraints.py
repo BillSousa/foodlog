@@ -24,9 +24,15 @@ def validate_order_status_transition(current_status: str,
         bool: True if valid
 
     Raises:
-        ValidationError: If new_status is invalid
+        ValidationError: If current_status or new_status is invalid
     """
     valid_statuses = {'planning', 'ordered', 'delivered', 'reconciled'}
+
+    if current_status not in valid_statuses:
+        raise ValidationError(
+            f"Invalid status '{current_status}'. "
+            f"Must be one of: {valid_statuses}"
+        )
 
     if new_status not in valid_statuses:
         raise ValidationError(
@@ -139,8 +145,16 @@ def validate_order_editable(status: str) -> bool:
         bool: True if editable
 
     Raises:
-        ValidationError: If status is reconciled
+        ValidationError: If status is invalid or is reconciled
     """
+    valid_statuses = {'planning', 'ordered', 'delivered', 'reconciled'}
+
+    if status not in valid_statuses:
+        raise ValidationError(
+            f"Invalid status '{status}'. "
+            f"Must be one of: {valid_statuses}"
+        )
+
     if status == 'reconciled':
         raise ValidationError(
             "Cannot edit a reconciled order. "

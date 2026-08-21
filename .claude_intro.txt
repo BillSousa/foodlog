@@ -10,7 +10,7 @@ Read SPEC.md.
 
 
 Now I want you to read /home/bear/.claude/plans/i-am-you-vivid-wreath.md. We need 
-to work on implementing these steps today. We will be picking up at Phase 4, Step 20. 
+to work on implementing these steps today. We will be picking up at Phase 4, Step 21d. 
 Do not start until I tell you to. Background on i-am-you-vivid-wreath. This project 
 first began by spending 4 days with Sonnet to draft SPEC.md. After the draft was 
 finished, Haiku used the draft to create the codebase. After the codebase was drafted, 

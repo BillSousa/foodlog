@@ -199,3 +199,102 @@ def test_filter_items_search_substring(
         assert len(result) == 2
         assert sample_items[0] in result
         assert sample_items[2] in result
+
+
+def test_filter_items_empty_list(test_db: Path) -> None:
+    """Test with empty items list returns empty list."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        repo = ProductNamesRepository()
+        result = filter_items([], "apple", [1], repo)
+        assert len(result) == 0
+        assert isinstance(result, list)
+
+
+def test_filter_items_item_with_none_category(test_db: Path) -> None:
+    """Test that item with None category_id is filtered out when category filter is active."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        item_name_id = names_repo.create_product_name("Item")
+
+        item_with_none_category = Item(
+            item_id=1,
+            name_id=item_name_id,
+            category_id=None,
+            price=1.00,
+            servings_per_block=2.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            glycemic_index=None,
+            calories=52.0,
+            total_fat_g=0.2,
+            sodium_mcg=100000.0,
+            choline_mcg=3.6,
+        )
+
+        repo = ProductNamesRepository()
+        # With category filter, None category item should be excluded
+        result = filter_items([item_with_none_category], "", [1], repo)
+        assert len(result) == 0
+
+        # Without category filter, None category item should be included
+        result = filter_items([item_with_none_category], "", [], repo)
+        assert len(result) == 1
+
+
+def test_filter_items_product_name_resolution_returns_none(
+    test_db: Path,
+) -> None:
+    """Test search when product name resolution returns None."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        names_repo = ProductNamesRepository()
+        item_name_id = names_repo.create_product_name("TestItem")
+
+        item = Item(
+            item_id=1,
+            name_id=item_name_id,
+            category_id=1,
+            price=1.00,
+            servings_per_block=2.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            glycemic_index=None,
+            calories=52.0,
+            total_fat_g=0.2,
+            sodium_mcg=100000.0,
+            choline_mcg=3.6,
+        )
+
+        repo = ProductNamesRepository()
+        # Mock get_product_name to return None (simulating invalid name_id)
+        with patch.object(repo, 'get_product_name', return_value=None):
+            # Search should compare against empty string, not match "test"
+            result = filter_items([item], "test", [], repo)
+            assert len(result) == 0
+
+            # No search text should still include the item
+            result = filter_items([item], "", [], repo)
+            assert len(result) == 1
+
+
+def test_filter_items_return_type_is_list(
+    test_db: Path, sample_items: list[Item]
+) -> None:
+    """Test that return type is always list."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        repo = ProductNamesRepository()
+        result = filter_items(sample_items, "apple", [1], repo)
+        assert isinstance(result, list)

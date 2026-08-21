@@ -72,6 +72,8 @@ class OrderPickerDialog(tk.Toplevel):
             )
             self.listbox.insert(tk.END, text)
 
+        self.order_ids = [order.order_id for order in orders]
+
     def _on_create_new(self) -> None:
         """Create new order."""
         from foodlog.gui.windows.order_creation_window import OrderCreationWindow
@@ -86,5 +88,7 @@ class OrderPickerDialog(tk.Toplevel):
             return
 
         index = selection[0]
-        messagebox.showinfo("TODO", f"Open order {index + 1} (Phase 8)")
+        order_id = self.order_ids[index]
+        from foodlog.gui.windows.order_creation_window import OrderCreationWindow
+        OrderCreationWindow(self, order_id=order_id)
         self.destroy()

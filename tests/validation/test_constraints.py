@@ -12,21 +12,27 @@ from foodlog.validation.constraints import (
 
 def test_valid_status_transition() -> None:
     """Test valid status transitions."""
-    assert validate_order_status_transition('planning', 'ordered')
-    assert validate_order_status_transition('ordered', 'delivered')
-    assert validate_order_status_transition('delivered', 'reconciled')
+    assert validate_order_status_transition('planning', 'ordered') is True
+    assert validate_order_status_transition('ordered', 'delivered') is True
+    assert validate_order_status_transition('delivered', 'reconciled') is True
 
 
 def test_any_to_any_status_allowed() -> None:
     """Test any status can transition to any other."""
-    assert validate_order_status_transition('reconciled', 'planning')
-    assert validate_order_status_transition('planning', 'reconciled')
+    assert validate_order_status_transition('reconciled', 'planning') is True
+    assert validate_order_status_transition('planning', 'reconciled') is True
 
 
 def test_invalid_status() -> None:
     """Test invalid status raises error."""
     with pytest.raises(ValidationError):
         validate_order_status_transition('planning', 'invalid_status')
+
+
+def test_invalid_current_status() -> None:
+    """Test invalid current_status raises error."""
+    with pytest.raises(ValidationError):
+        validate_order_status_transition('invalid_status', 'planning')
 
 
 def test_integer_blocks_valid() -> None:
@@ -75,12 +81,18 @@ def test_servings_negative_rejected() -> None:
 
 def test_order_editable_valid_statuses() -> None:
     """Test editable statuses allow editing."""
-    assert validate_order_editable('planning')
-    assert validate_order_editable('ordered')
-    assert validate_order_editable('delivered')
+    assert validate_order_editable('planning') is True
+    assert validate_order_editable('ordered') is True
+    assert validate_order_editable('delivered') is True
 
 
 def test_order_editable_reconciled_rejected() -> None:
     """Test reconciled status blocks editing."""
     with pytest.raises(ValidationError):
         validate_order_editable('reconciled')
+
+
+def test_order_editable_invalid_status_rejected() -> None:
+    """Test invalid status raises error."""
+    with pytest.raises(ValidationError):
+        validate_order_editable('invalid_status')
