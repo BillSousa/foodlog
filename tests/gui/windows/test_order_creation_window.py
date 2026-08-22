@@ -41,7 +41,9 @@ def test_db() -> Path:
 @pytest.fixture
 def root() -> tk.Tk:
     """Create a test root window."""
-    return tk.Tk()
+    window = tk.Tk()
+    yield window
+    window.destroy()
 
 
 @pytest.fixture
@@ -53,7 +55,10 @@ def order_creation_window(
         'foodlog.database.connection.get_database_path',
         return_value=test_db
     ):
-        return OrderCreationWindow(root)
+        window = OrderCreationWindow(root)
+    yield window
+    if window.winfo_exists():
+        window.destroy()
 
 
 def test_set_locked_disables_header(
@@ -668,7 +673,10 @@ def test_load_existing_order_applies_reconciled_lock(
         )
         order_id = orders_repo.create_order(order)
 
-        window = OrderCreationWindow(root, order_id=order_id)
+        with patch(
+            'foodlog.gui.windows.order_creation_window.messagebox'
+        ):
+            window = OrderCreationWindow(root, order_id=order_id)
 
         # Header widgets should be locked
         assert (

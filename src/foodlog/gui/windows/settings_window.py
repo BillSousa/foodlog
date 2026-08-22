@@ -12,7 +12,7 @@ class SettingsWindow(tk.Toplevel):
         """Initialize settings window."""
         super().__init__(parent)
         self.title("Settings")
-        self.geometry("500x300")
+        self.geometry("700x500")
 
         self.settings_repo = SettingsRepository()
         self._layout()

@@ -9,7 +9,9 @@ from foodlog.models.fact_orders import Order
 @pytest.fixture
 def root() -> tk.Tk:
     """Create a test root window."""
-    return tk.Tk()
+    window = tk.Tk()
+    yield window
+    window.destroy()
 
 
 @pytest.fixture
@@ -69,7 +71,8 @@ def test_dialog_initialized_with_correct_geometry(root: tk.Tk) -> None:
         ) as mock_geometry:
             dialog = OrderPickerDialog(root)
             # Verify geometry was called with the correct dimension string
-            mock_geometry.assert_called_with("500x400")
+            mock_geometry.assert_called_with("800x600")
+            dialog.destroy()
 
 
 def test_selected_order_id_initialized_to_none(root: tk.Tk) -> None:
@@ -204,7 +207,7 @@ def test_on_create_new_creates_window(
         dialog = OrderPickerDialog(root)
         dialog._on_create_new()
 
-        mock_window_class.assert_called_once_with(dialog)
+        mock_window_class.assert_called_once_with(root)
 
 
 @patch(
@@ -224,9 +227,9 @@ def test_on_create_new_window_created_without_order_id(
         dialog = OrderPickerDialog(root)
         dialog._on_create_new()
 
-        # Verify called with just parent, no order_id
+        # Verify called with just parent (root), no order_id
         call_args = mock_window_class.call_args
-        assert call_args[0][0] == dialog  # First positional arg is parent
+        assert call_args[0][0] == root  # First positional arg is parent
         # order_id not in kwargs
         assert "order_id" not in call_args[1]
 
@@ -277,7 +280,7 @@ def test_on_open_with_selection_creates_window(
         dialog._on_open()
 
         # Verify OrderCreationWindow called with order_id=1
-        mock_window_class.assert_called_once_with(dialog, order_id=1)
+        mock_window_class.assert_called_once_with(root, order_id=1)
 
 
 @patch(
@@ -300,8 +303,9 @@ def test_on_open_uses_correct_order_id_from_selection(
 
         dialog._on_open()
 
-        # Verify order_id=2 is passed
+        # Verify root is parent and order_id=2 is passed
         call_args = mock_window_class.call_args
+        assert call_args[0][0] == root
         assert call_args[1]["order_id"] == 2
 
 
@@ -325,8 +329,9 @@ def test_on_open_with_third_order_selection(
 
         dialog._on_open()
 
-        # Verify order_id=3 is passed
+        # Verify root is parent and order_id=3 is passed
         call_args = mock_window_class.call_args
+        assert call_args[0][0] == root
         assert call_args[1]["order_id"] == 3
 
 

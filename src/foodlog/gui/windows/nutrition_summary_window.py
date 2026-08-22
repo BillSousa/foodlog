@@ -17,7 +17,7 @@ class NutritionSummaryWindow(tk.Toplevel):
         """Initialize nutrition summary window."""
         super().__init__(parent)
         self.title(f"Order #{order_id} — Nutrition Summary")
-        self.geometry("900x600")
+        self.geometry("1000x750")
         self.order_id = order_id
         self._layout()
 

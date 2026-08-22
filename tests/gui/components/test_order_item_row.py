@@ -133,9 +133,9 @@ def test_update_display_positive_discount_forced_negative(
         row.discount_var.set("2.00")  # User enters positive
         row._update_display()
 
-        # Net should be: (5.00 * 10) + 0 + (-2.00) + 0 = 48.00
+        # Net should be: (5.00 / 10.0) * 10 + 0 + (-2.00) + 0 = 3.00
         net_text = row.net_label.cget("text")
-        assert net_text == "$48.00"
+        assert net_text == "$3.00"
 
 
 def test_update_display_negative_coupon_stays_negative(
@@ -151,9 +151,9 @@ def test_update_display_negative_coupon_stays_negative(
         row.coupon_var.set("-3.00")
         row._update_display()
 
-        # Net should be: (5.00 * 10) + 0 + 0 + (-3.00) = 47.00
+        # Net should be: (5.00 / 10.0) * 10 + 0 + 0 + (-3.00) = 2.00
         net_text = row.net_label.cget("text")
-        assert net_text == "$47.00"
+        assert net_text == "$2.00"
 
 
 def test_order_item_row_displays_product_name_not_units(

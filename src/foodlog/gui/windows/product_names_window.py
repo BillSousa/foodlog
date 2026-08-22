@@ -11,7 +11,7 @@ class ProductNamesWindow(tk.Toplevel):
         """Initialize product names window."""
         super().__init__(parent)
         self.title("Edit Product Names")
-        self.geometry("500x500")
+        self.geometry("700x600")
 
         self.names_repo = ProductNamesRepository()
         self._layout()

@@ -11,7 +11,7 @@ class OrderPickerDialog(tk.Toplevel):
         """Initialize order picker dialog."""
         super().__init__(parent)
         self.title("Select an Order to Manage")
-        self.geometry("500x400")
+        self.geometry("800x600")
         self.selected_order_id: int | None = None
         self._layout()
 
@@ -38,6 +38,7 @@ class OrderPickerDialog(tk.Toplevel):
             height=15
         )
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.listbox.bind("<Return>", lambda e: self._on_open())
         scrollbar.config(command=self.listbox.yview)
 
         self._load_orders()
@@ -77,7 +78,7 @@ class OrderPickerDialog(tk.Toplevel):
     def _on_create_new(self) -> None:
         """Create new order."""
         from foodlog.gui.windows.order_creation_window import OrderCreationWindow
-        OrderCreationWindow(self)
+        OrderCreationWindow(self.master)
         self.destroy()
 
     def _on_open(self) -> None:
@@ -90,5 +91,5 @@ class OrderPickerDialog(tk.Toplevel):
         index = selection[0]
         order_id = self.order_ids[index]
         from foodlog.gui.windows.order_creation_window import OrderCreationWindow
-        OrderCreationWindow(self, order_id=order_id)
+        OrderCreationWindow(self.master, order_id=order_id)
         self.destroy()

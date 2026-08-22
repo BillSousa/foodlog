@@ -16,7 +16,7 @@ class ConsumptionWindow(tk.Toplevel):
         """Initialize consumption logging window."""
         super().__init__(parent)
         self.title("Log Consumption")
-        self.geometry("700x600")
+        self.geometry("900x750")
 
         self.entry_date = datetime.today()
         self.consumption_entries: dict[int, dict] = {}

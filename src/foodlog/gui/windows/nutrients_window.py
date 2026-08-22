@@ -14,7 +14,7 @@ class NutrientsWindow(tk.Toplevel):
         """Initialize nutrients window."""
         super().__init__(parent)
         self.title("Manage Tracked Nutrients")
-        self.geometry("700x600")
+        self.geometry("900x750")
 
         self.nutrients_repo = TrackedNutrientsRepository()
         self.nutrient_rows: dict[int, dict] = {}

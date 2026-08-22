@@ -15,7 +15,7 @@ class OrderSummaryWindow(tk.Toplevel):
         """Initialize order summary window."""
         super().__init__(parent)
         self.title(f"Order #{order_id} — Money Summary")
-        self.geometry("700x600")
+        self.geometry("900x750")
         self.order_id = order_id
         self._layout()
 

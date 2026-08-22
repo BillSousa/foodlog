@@ -9,7 +9,7 @@ class MainWindow(tk.Tk):
         """Initialize main window."""
         super().__init__()
         self.title("FoodLog — Main")
-        self.geometry("400x600")
+        self.geometry("600x800")
         self._layout()
 
     def _layout(self) -> None:
