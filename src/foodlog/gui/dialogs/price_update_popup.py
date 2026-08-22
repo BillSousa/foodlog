@@ -39,7 +39,12 @@ class PriceUpdatePopup(tk.Toplevel):
 
         self._layout()
         self.transient(parent)
-        self.grab_set()
+        try:
+            self.grab_set()
+        except tk.TclError:
+            # In headless/test environments, grab may fail if window
+            # isn't fully viewable yet. Continue gracefully.
+            pass
 
     def _layout(self) -> None:
         """Build dialog layout."""

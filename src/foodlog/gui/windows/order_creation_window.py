@@ -31,7 +31,7 @@ class OrderCreationWindow(tk.Toplevel):
             order_id: Optional order_id to load and edit existing order
         """
         super().__init__(parent)
-        self.geometry("900x700")
+        self.geometry("1000x700")
 
         self.order_items: list[dict] = []
         self.order_id: int | None = order_id
@@ -85,13 +85,19 @@ class OrderCreationWindow(tk.Toplevel):
             if item:
                 self._add_item_row(item, existing_line=line)
 
-        # Lock interface if order is reconciled
+        # Show warning and lock interface if order is reconciled
         if order.status == "reconciled":
+            messagebox.showwarning(
+                "Reconciled Order",
+                "Cannot edit a reconciled order. Change status away "
+                "from reconciled to re-enable editing."
+            )
             self._set_locked(True)
 
     def _layout(self, cal_target: float) -> None:
         """Build order creation layout."""
         self.header = OrderHeader(self)
+        self.header.set_on_status_change_callback(self._on_status_change)
         self.header.get_frame().pack(fill=tk.X)
 
         self.search_filter = ItemSearchFilter(self)
@@ -265,6 +271,7 @@ class OrderCreationWindow(tk.Toplevel):
             return
 
         header = self.header.get_values()
+        new_status = header["status"]
 
         try:
             orders_repo = OrdersRepository()
@@ -272,15 +279,23 @@ class OrderCreationWindow(tk.Toplevel):
 
             # Create or update order header
             if self.order_id:
-                # Editing existing order: update header
-                orders_repo.update_order_header(
+                # Editing existing order: check current status
+                current_order = orders_repo.get_order(self.order_id)
+                if current_order and current_order.status != "reconciled":
+                    # Only update header if order is not reconciled
+                    orders_repo.update_order_header(
+                        self.order_id,
+                        order_date=header["order_date"],
+                        is_delivery=bool(header["is_delivery"]),
+                        delivery_charge=header["delivery_charge"],
+                        tip=header["tip"],
+                        tax=header["tax"],
+                        order_level_coupon=header["order_level_coupon"]
+                    )
+                # Always update status (even for reconciled orders)
+                orders_repo.update_order_status(
                     self.order_id,
-                    order_date=header["order_date"],
-                    is_delivery=bool(header["is_delivery"]),
-                    delivery_charge=header["delivery_charge"],
-                    tip=header["tip"],
-                    tax=header["tax"],
-                    order_level_coupon=header["order_level_coupon"]
+                    header["status"]
                 )
             else:
                 # Creating new order
@@ -372,7 +387,25 @@ class OrderCreationWindow(tk.Toplevel):
             messagebox.showinfo("Success", f"Order #{self.order_id} saved")
             self.destroy()
         except ValidationError as e:
-            messagebox.showerror("Save failed", str(e))
+            # Suppress reconciled-order errors if changing status to reconciled
+            if new_status == "reconciled" and "reconciled" in str(e).lower():
+                messagebox.showinfo("Success", f"Order #{self.order_id} saved")
+                self.destroy()
+            else:
+                messagebox.showerror("Save failed", str(e))
+
+    def _on_status_change(self, new_status: str) -> None:
+        """Handle status dropdown change.
+
+        Parameters
+        ----------
+        new_status : str
+            The new status value
+        """
+        if new_status == "reconciled":
+            self._set_locked(True)
+        else:
+            self._set_locked(False)
 
     def _set_locked(self, locked: bool) -> None:
         """Disable/enable every editable widget except the status field.

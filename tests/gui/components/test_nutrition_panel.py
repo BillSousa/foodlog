@@ -36,7 +36,9 @@ def test_db() -> Path:
 @pytest.fixture
 def root_widget() -> tk.Tk:
     """Create throwaway Tk root for testing."""
-    return tk.Tk()
+    window = tk.Tk()
+    yield window
+    window.destroy()
 
 
 def test_nutrition_panel_renders_tracked_nutrients(

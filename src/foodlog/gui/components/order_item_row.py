@@ -50,24 +50,28 @@ class OrderItemRow:
             blocks_value = (
                 existing_line.actual_servings / self.servings_per_block
             )
-            self.blocks_var = tk.StringVar(value=str(blocks_value))
-            self.last_valid_blocks = str(blocks_value)
+            self.blocks_var = tk.StringVar(value=f"{blocks_value:.2f}")
+            self.last_valid_blocks = f"{blocks_value:.2f}"
             self.servings_var = tk.StringVar(
-                value=str(existing_line.actual_servings)
+                value=f"{existing_line.actual_servings:.2f}"
             )
-            self.sale_var = tk.StringVar(value=str(existing_line.sale))
+            self.sale_var = tk.StringVar(
+                value=f"{existing_line.sale:.2f}"
+            )
             self.discount_var = tk.StringVar(
-                value=str(existing_line.discount)
+                value=f"{existing_line.discount:.2f}"
             )
-            self.coupon_var = tk.StringVar(value=str(existing_line.coupon))
+            self.coupon_var = tk.StringVar(
+                value=f"{existing_line.coupon:.2f}"
+            )
         else:
             self.blocks_var = tk.StringVar(value="1")
             self.servings_var = tk.StringVar(
                 value=str(item.servings_per_block)
             )
-            self.sale_var = tk.StringVar(value="0")
-            self.discount_var = tk.StringVar(value="0")
-            self.coupon_var = tk.StringVar(value="0")
+            self.sale_var = tk.StringVar(value="0.00")
+            self.discount_var = tk.StringVar(value="0.00")
+            self.coupon_var = tk.StringVar(value="0.00")
             self.price_var = tk.StringVar(value=str(item.price))
             self.last_valid_blocks = "1"
             self.last_valid_price = str(item.price)
@@ -142,6 +146,8 @@ class OrderItemRow:
         self.delete_btn = tk.Button(self.frame, text="X", command=self._delete)
         self.delete_btn.pack(side=tk.RIGHT, padx=5)
 
+        self._update_display()
+
     def _on_blocks_change(self, *args) -> None:
         """Update servings when blocks change."""
         if self._updating:
@@ -188,7 +194,7 @@ class OrderItemRow:
             discount = to_negative(float(self.discount_var.get()))
             coupon = to_negative(float(self.coupon_var.get()))
 
-            stated = price * servings
+            stated = (price / self.servings_per_block) * servings
             net = stated + sale + discount + coupon
 
             self.net_label.config(text=f"${net:.2f}")
@@ -250,7 +256,7 @@ class OrderItemRow:
             sale = to_negative(float(self.sale_var.get()))
             discount = to_negative(float(self.discount_var.get()))
             coupon = to_negative(float(self.coupon_var.get()))
-            net = (stated_price * servings_ordered) + sale + discount + coupon
+            net = (stated_price / self.servings_per_block) * servings_ordered + sale + discount + coupon
 
             return {
                 "item_id": self.item.item_id,

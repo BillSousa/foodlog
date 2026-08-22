@@ -28,7 +28,9 @@ class OrderHeader:
         self.tip_entry: tk.Entry | None = None
         self.tax_entry: tk.Entry | None = None
         self.order_level_coupon_entry: tk.Entry | None = None
+        self.on_status_change_callback = None
         self._layout()
+        self.status_var.trace_add("write", self._on_status_change)
 
     def _layout(self) -> None:
         """Build header layout."""
@@ -108,6 +110,21 @@ class OrderHeader:
         self.tip_var.set(str(order.tip))
         self.tax_var.set(str(order.tax))
         self.order_level_coupon_var.set(str(order.order_level_coupon))
+
+    def _on_status_change(self, *args) -> None:
+        """Handle status dropdown change."""
+        if self.on_status_change_callback:
+            self.on_status_change_callback(self.status_var.get())
+
+    def set_on_status_change_callback(self, callback) -> None:
+        """Set callback for when status changes.
+
+        Parameters
+        ----------
+        callback : callable
+            Function to call with new status value when status changes
+        """
+        self.on_status_change_callback = callback
 
     def set_locked(self, locked: bool) -> None:
         """Disable/enable editable widgets (except status).

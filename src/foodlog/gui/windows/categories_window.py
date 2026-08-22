@@ -12,7 +12,7 @@ class CategoriesWindow(tk.Toplevel):
         """Initialize categories window."""
         super().__init__(parent)
         self.title("Manage Categories")
-        self.geometry("400x500")
+        self.geometry("700x600")
 
         self.categories_repo = CategoriesRepository()
         self.items_repo = ItemsRepository()

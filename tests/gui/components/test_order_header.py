@@ -9,7 +9,9 @@ from foodlog.models.fact_orders import Order
 @pytest.fixture
 def root() -> tk.Tk:
     """Create a test root window."""
-    return tk.Tk()
+    window = tk.Tk()
+    yield window
+    window.destroy()
 
 
 @pytest.fixture

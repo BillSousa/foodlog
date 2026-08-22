@@ -13,7 +13,7 @@ class ReportingWindow(tk.Toplevel):
         """Initialize reporting window."""
         super().__init__(parent)
         self.title("Reporting & Analytics")
-        self.geometry("900x700")
+        self.geometry("1000x800")
 
         self._layout()
 

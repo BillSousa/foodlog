@@ -44,6 +44,10 @@ class OrderTotals:
         self.labels["ratio1"] = tk.Label(row2, text="0", width=10)
         self.labels["ratio1"].pack(side=tk.LEFT, padx=5)
 
+        tk.Label(row2, text="Ratio2:").pack(side=tk.LEFT, padx=10)
+        self.labels["ratio2"] = tk.Label(row2, text="0", width=10)
+        self.labels["ratio2"].pack(side=tk.LEFT, padx=5)
+
     def update(
         self,
         cost: float,
@@ -63,6 +67,7 @@ class OrderTotals:
         self.labels["protein"].config(text=f"{protein_g:.1f}g")
         self.labels["sodium"].config(text=f"{sodium_mg:.0f}mg")
         self.labels["ratio1"].config(text=f"{ratio1:.1f}")
+        self.labels["ratio2"].config(text=f"{ratio2:.1f}")
 
     def get_frame(self) -> tk.Frame:
         """Return frame."""

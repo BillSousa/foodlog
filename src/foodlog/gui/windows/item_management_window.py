@@ -15,7 +15,7 @@ class ItemManagementWindow(tk.Toplevel):
         """Initialize item management window."""
         super().__init__(parent)
         self.title("Manage Items")
-        self.geometry("700x500")
+        self.geometry("850x700")
         self._layout()
 
     def _layout(self) -> None:
