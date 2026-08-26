@@ -1,10 +1,17 @@
-import csv
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
+from tkinter import messagebox
 
 from foodlog.database.connection import get_database_path
+from foodlog.gui.helpers.csv_exporter import export_rows_to_csv
+from foodlog.gui.helpers.group_lines_by_category import (
+    group_lines_by_category,
+)
+from foodlog.repository.categories_repository import CategoriesRepository
+from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.order_lines_repository import OrderLinesRepository
+from foodlog.repository.orders_repository import OrdersRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
 
 
@@ -46,38 +53,81 @@ class OrderSummaryWindow(tk.Toplevel):
         canvas.configure(yscrollcommand=scrollbar.set)
 
         lines_repo = OrderLinesRepository()
+        items_repo = ItemsRepository()
+        categories_repo = CategoriesRepository()
+        orders_repo = OrdersRepository()
+        product_names_repo = ProductNamesRepository()
+
         lines = lines_repo.get_order_lines(self.order_id)
+        order = orders_repo.get_order(self.order_id)
 
-        total_cost = 0.0
+        grouped = group_lines_by_category(
+            lines, items_repo, categories_repo
+        )
 
-        for line in lines:
-            name_text = f"Item #{line.item_id}"
-            text = (
-                f"{name_text} x{line.actual_servings:.1f}: "
-                f"${line.stated_price:.2f} → ${line.net_price:.2f}"
-            )
-            tk.Label(scrollable, text=text, justify=tk.LEFT).pack(
-                anchor=tk.W, padx=10, pady=2
-            )
-            total_cost += line.net_price
+        subtotal = 0.0
+        for category_key in grouped:
+            tk.Label(
+                scrollable,
+                text=category_key,
+                font=("Arial", 10, "bold"),
+            ).pack(anchor=tk.W, padx=10, pady=(10, 5))
+
+            category_subtotal = 0.0
+            for line, item in grouped[category_key]:
+                product_name = product_names_repo.get_product_name(
+                    item.name_id
+                )
+                name_text = (
+                    product_name.name_text
+                    if product_name
+                    else f"Item #{item.item_id}"
+                )
+
+                text = (
+                    f"  {name_text} x{line.actual_servings:.1f}: "
+                    f"${line.stated_price:.2f} → "
+                    f"${line.net_price:.2f}"
+                )
+                tk.Label(scrollable, text=text, justify=tk.LEFT).pack(
+                    anchor=tk.W, padx=10, pady=2
+                )
+
+                category_subtotal += line.net_price
+
+            subtotal += category_subtotal
+            tk.Label(
+                scrollable,
+                text=f"  Subtotal: ${category_subtotal:.2f}",
+                font=("Arial", 9, "bold"),
+            ).pack(anchor=tk.W, padx=10, pady=(0, 5))
 
         tk.Label(scrollable, text="", font=("Arial", 1)).pack()
 
         tk.Label(
             scrollable,
-            text=f"Subtotal: ${total_cost:.2f}",
+            text=f"Subtotal: ${subtotal:.2f}",
             font=("Arial", 10, "bold"),
         ).pack(anchor=tk.W, padx=10, pady=5)
 
-        tk.Label(
-            scrollable,
-            text=f"Delivery: $0.00\nTip: $0.00\nTax: $0.00\nCoupon: $0.00",
-            justify=tk.LEFT,
-        ).pack(anchor=tk.W, padx=10, pady=5)
+        delivery = order.delivery_charge if order else 0.0
+        tip = order.tip if order else 0.0
+        tax = order.tax if order else 0.0
+        coupon = order.order_level_coupon if order else 0.0
 
         tk.Label(
             scrollable,
-            text=f"TOTAL: ${total_cost:.2f}",
+            text=(
+                f"Delivery: ${delivery:.2f}\nTip: ${tip:.2f}\n"
+                f"Tax: ${tax:.2f}\nCoupon: ${coupon:.2f}"
+            ),
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, padx=10, pady=5)
+
+        grand_total = subtotal + delivery + tip + tax + coupon
+        tk.Label(
+            scrollable,
+            text=f"TOTAL: ${grand_total:.2f}",
             font=("Arial", 11, "bold"),
         ).pack(anchor=tk.W, padx=10, pady=10)
 
@@ -99,30 +149,45 @@ class OrderSummaryWindow(tk.Toplevel):
         """Export order summary to CSV."""
         try:
             lines_repo = OrderLinesRepository()
+            items_repo = ItemsRepository()
+            categories_repo = CategoriesRepository()
+            product_names_repo = ProductNamesRepository()
+
             lines = lines_repo.get_order_lines(self.order_id)
+            grouped = group_lines_by_category(
+                lines, items_repo, categories_repo
+            )
 
             csv_path = (
                 get_database_path().parent
                 / f"order_{self.order_id}_money_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             )
 
-            with open(csv_path, "w", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow(
-                    [
-                        "Item ID",
-                        "Servings",
-                        "Stated Price",
-                        "Sale",
-                        "Discount",
-                        "Coupon",
-                        "Net Price",
-                    ]
-                )
-                for line in lines:
-                    writer.writerow(
+            header = [
+                "Category",
+                "Item",
+                "Servings",
+                "Stated Price",
+                "Sale",
+                "Discount",
+                "Coupon",
+                "Net Price",
+            ]
+            rows = []
+            for category_key in grouped:
+                for line, item in grouped[category_key]:
+                    product_name = product_names_repo.get_product_name(
+                        item.name_id
+                    )
+                    name_text = (
+                        product_name.name_text
+                        if product_name
+                        else f"Item #{item.item_id}"
+                    )
+                    rows.append(
                         [
-                            line.item_id,
+                            category_key,
+                            name_text,
                             line.actual_servings,
                             line.stated_price,
                             line.sale,
@@ -132,6 +197,8 @@ class OrderSummaryWindow(tk.Toplevel):
                         ]
                     )
 
-            tk.messagebox.showinfo("Export", f"Saved to {csv_path}")
+            export_rows_to_csv(csv_path, header, rows)
+
+            messagebox.showinfo("Export", f"Saved to {csv_path}")
         except Exception as e:
-            tk.messagebox.showerror("Error", f"Export failed: {e}")
+            messagebox.showerror("Error", f"Export failed: {e}")

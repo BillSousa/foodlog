@@ -17,7 +17,7 @@ class NutritionPanel:
             parent: Parent widget
         """
         self.parent = parent
-        self.frame = tk.LabelFrame(parent, text="Nutrition")
+        self.frame = tk.LabelFrame(parent, text="Nutrition per serving")
         self.entries: dict[str, tk.Entry] = {}
         self._layout()
 
