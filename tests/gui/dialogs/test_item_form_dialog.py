@@ -58,6 +58,7 @@ class TestItemFormDialogPopulate:
             'units': 'oz',
             'container_size': '10.0',
             'serving_size': '1.67',
+            'category_name': 'Fruits',
             'active': True,
             'blocks_must_be_integer': False,
             'glycemic_index': '50',
@@ -89,6 +90,7 @@ class TestItemFormDialogPopulate:
             'units': 'kg',
             'container_size': '2.0',
             'serving_size': '0.1',
+            'category_name': 'Grains',
             'active': True,
             'blocks_must_be_integer': True,
             'glycemic_index': '70',
@@ -99,8 +101,9 @@ class TestItemFormDialogPopulate:
         dialog = ItemFormDialog(root, item_id=1)
 
         assert dialog.name_entry.get() == 'Rice'
+        assert dialog.category_var.get() == 'Grains'
         assert dialog.price_entry.get() == '5.99'
-        assert dialog.units_entry.get() == 'kg'
+        assert dialog.units_var.get() == 'kg'
         assert dialog.container_entry.get() == '2.0'
         assert dialog.serving_entry.get() == '0.1'
         assert dialog.active_var.get() is True
@@ -127,6 +130,7 @@ class TestItemFormDialogPopulate:
             'units': 'g',
             'container_size': '500',
             'serving_size': '50',
+            'category_name': '',
             'active': True,
             'blocks_must_be_integer': False,
             'glycemic_index': None,
@@ -160,7 +164,7 @@ class TestItemFormDialogSave:
 
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.insert(0, '7.99')
         dialog.container_entry.insert(0, '5')
         dialog.serving_entry.insert(0, '1')
@@ -196,8 +200,7 @@ class TestItemFormDialogSave:
         # Clear pre-populated values and set new ones
         dialog.name_entry.delete(0, tk.END)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.delete(0, tk.END)
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.delete(0, tk.END)
         dialog.price_entry.insert(0, '7.99')
         dialog.container_entry.delete(0, tk.END)
@@ -234,8 +237,7 @@ class TestItemFormDialogSave:
         dialog = ItemFormDialog(root, item_id=1)
         dialog.name_entry.delete(0, tk.END)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.delete(0, tk.END)
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.delete(0, tk.END)
         dialog.price_entry.insert(0, '8.99')
         dialog.container_entry.delete(0, tk.END)
@@ -275,8 +277,7 @@ class TestItemFormDialogSave:
         dialog = ItemFormDialog(root, item_id=1)
         dialog.name_entry.delete(0, tk.END)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.delete(0, tk.END)
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.delete(0, tk.END)
         dialog.price_entry.insert(0, '7.99')
         dialog.container_entry.delete(0, tk.END)
@@ -309,7 +310,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, '   ')
-        dialog.units_entry.insert(0, 'oz')
+        dialog.units_var.set('oz')
         dialog.price_entry.insert(0, '1.0')
         dialog.container_entry.insert(0, '10')
         dialog.serving_entry.insert(0, '1')
@@ -329,7 +330,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Rice')
-        dialog.units_entry.insert(0, '   ')
+        dialog.units_var.set('')
         dialog.price_entry.insert(0, '1.0')
         dialog.container_entry.insert(0, '10')
         dialog.serving_entry.insert(0, '1')
@@ -349,7 +350,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Rice')
-        dialog.units_entry.insert(0, 'g')
+        dialog.units_var.set('g')
         dialog.price_entry.insert(0, '1.0')
         dialog.container_entry.insert(0, '-10')
         dialog.serving_entry.insert(0, '1')
@@ -369,7 +370,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Rice')
-        dialog.units_entry.insert(0, 'g')
+        dialog.units_var.set('g')
         dialog.price_entry.insert(0, '1.0')
         dialog.container_entry.insert(0, '10')
         dialog.serving_entry.insert(0, '0')
@@ -393,7 +394,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Rice')
-        dialog.units_entry.insert(0, 'g')
+        dialog.units_var.set('g')
         dialog.price_entry.insert(0, '1.0')
         dialog.container_entry.insert(0, '10')
         dialog.serving_entry.insert(0, '1')
@@ -414,7 +415,7 @@ class TestItemFormDialogValidation:
         mock_tracked_repo.return_value.list_all_nutrients.return_value = []
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Rice')
-        dialog.units_entry.insert(0, 'g')
+        dialog.units_var.set('g')
         dialog.price_entry.insert(0, 'abc')
         dialog.container_entry.insert(0, '10')
         dialog.serving_entry.insert(0, '1')
@@ -448,7 +449,7 @@ class TestItemFormDialogCategoryResolution:
 
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.insert(0, '7.99')
         dialog.container_entry.insert(0, '5')
         dialog.serving_entry.insert(0, '1')
@@ -478,7 +479,7 @@ class TestItemFormDialogCategoryResolution:
 
         dialog = ItemFormDialog(root)
         dialog.name_entry.insert(0, 'Chicken')
-        dialog.units_entry.insert(0, 'lb')
+        dialog.units_var.set('lb')
         dialog.price_entry.insert(0, '7.99')
         dialog.container_entry.insert(0, '5')
         dialog.serving_entry.insert(0, '1')

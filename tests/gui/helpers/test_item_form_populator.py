@@ -5,6 +5,7 @@ import pytest
 from foodlog.gui.helpers.item_form_populator import (
     populate_item_form_data,
 )
+from foodlog.models.dim_categories import Category
 from foodlog.models.dim_items import Item
 from foodlog.models.dim_product_names import ProductName
 
@@ -293,6 +294,7 @@ def test_populate_item_form_data_return_structure(
         "units",
         "container_size",
         "serving_size",
+        "category_name",
         "active",
         "blocks_must_be_integer",
         "glycemic_index",
@@ -300,3 +302,64 @@ def test_populate_item_form_data_return_structure(
     ]
     for key in required_keys:
         assert key in result
+
+
+def test_populate_item_form_data_resolves_category_name(
+    mock_product_names_repo: MagicMock,
+) -> None:
+    """Test that category name is resolved when category_id is set."""
+    item = Item(
+        item_id=1,
+        name_id=1,
+        category_id=5,
+        price=2.0,
+        servings_per_block=1.0,
+        units="g",
+        container_size=100.0,
+        serving_size=100.0,
+        blocks_must_be_integer=0,
+        active=1,
+        glycemic_index=None,
+        choline_mcg=0.0,
+    )
+    mock_product_names_repo.get_product_name.return_value = ProductName(
+        name_id=1, name_text="Test"
+    )
+    mock_categories_repo = MagicMock()
+    mock_categories_repo.get_category.return_value = Category(
+        category_id=5, category_name="Pasta"
+    )
+
+    result = populate_item_form_data(
+        item, mock_product_names_repo, mock_categories_repo
+    )
+
+    assert result["category_name"] == "Pasta"
+    mock_categories_repo.get_category.assert_called_once_with(5)
+
+
+def test_populate_item_form_data_empty_category_when_none(
+    mock_product_names_repo: MagicMock,
+) -> None:
+    """Test that category_name is empty string when category_id is None."""
+    item = Item(
+        item_id=1,
+        name_id=1,
+        category_id=None,
+        price=2.0,
+        servings_per_block=1.0,
+        units="g",
+        container_size=100.0,
+        serving_size=100.0,
+        blocks_must_be_integer=0,
+        active=1,
+        glycemic_index=None,
+        choline_mcg=0.0,
+    )
+    mock_product_names_repo.get_product_name.return_value = ProductName(
+        name_id=1, name_text="Test"
+    )
+
+    result = populate_item_form_data(item, mock_product_names_repo)
+
+    assert result["category_name"] == ""

@@ -76,8 +76,19 @@ class ItemFormDialog(tk.Toplevel):
         self.price_entry.grid(row=2, column=1, sticky=tk.W, pady=5)
 
         tk.Label(frame, text="Units:").grid(row=3, column=0, sticky=tk.W, pady=5)
-        self.units_entry = tk.Entry(frame, width=10)
-        self.units_entry.grid(row=3, column=1, sticky=tk.W, pady=5)
+        self.units_var = tk.StringVar()
+        units_options = [
+            "units", "g", "oz", "lb", "kg", "mL", "L", "fl oz", "cup",
+            "gal"
+        ]
+        self.units_dropdown = tk.ttk.Combobox(
+            frame,
+            textvariable=self.units_var,
+            values=units_options,
+            width=10,
+            state="readonly"
+        )
+        self.units_dropdown.grid(row=3, column=1, sticky=tk.W, pady=5)
 
         tk.Label(frame, text="Container Size:").grid(
             row=4, column=0, sticky=tk.W, pady=5
@@ -134,11 +145,13 @@ class ItemFormDialog(tk.Toplevel):
             return
 
         name_repo = ProductNamesRepository()
-        data = populate_item_form_data(self.item, name_repo)
+        cat_repo = CategoriesRepository()
+        data = populate_item_form_data(self.item, name_repo, cat_repo)
 
         self.name_entry.insert(0, data['name_text'])
+        self.category_var.set(data['category_name'])
         self.price_entry.insert(0, data['price'])
-        self.units_entry.insert(0, data['units'])
+        self.units_var.set(data['units'])
         self.container_entry.insert(0, data['container_size'])
         self.serving_entry.insert(0, data['serving_size'])
         self.active_var.set(data['active'])
@@ -158,7 +171,7 @@ class ItemFormDialog(tk.Toplevel):
                 messagebox.showerror("Error", "Name is required")
                 return
 
-            units = self.units_entry.get().strip()
+            units = self.units_var.get().strip()
             if not units:
                 messagebox.showerror("Error", "Units is required")
                 return
@@ -175,7 +188,10 @@ class ItemFormDialog(tk.Toplevel):
                 return
 
             name_repo = ProductNamesRepository()
-            name_id = name_repo.create_product_name(name)
+            if self.item_id:
+                name_id = self.item.name_id
+            else:
+                name_id = name_repo.create_product_name(name)
 
             category_id = None
             selected_category_name = self.category_var.get().strip()

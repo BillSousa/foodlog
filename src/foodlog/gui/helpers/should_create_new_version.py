@@ -28,9 +28,13 @@ def should_create_new_version(
     nutrition_affecting = set(NUTRIENT_TO_COLUMN_MAP.values())
     nutrition_affecting.update(['units', 'container_size', 'serving_size'])
 
+    # Only compare columns that are actually in new_nutrition dict.
+    # Missing columns (untracked nutrients) are not relevant to SCD2.
     for column in nutrition_affecting:
+        if column not in new_nutrition:
+            continue
         old_value = getattr(old_item, column, None)
-        new_value = new_nutrition.get(column)
+        new_value = new_nutrition[column]
         if old_value != new_value:
             return True
 

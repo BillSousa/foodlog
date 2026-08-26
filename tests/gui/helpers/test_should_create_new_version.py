@@ -336,3 +336,28 @@ def test_should_create_new_version_blocks_must_be_integer_change(
         protein_g=5.0,
     )
     assert should_create_new_version(base_item, new_nutrition) is False
+
+
+def test_should_create_new_version_untracked_nutrients_missing(
+    base_item: Item,
+) -> None:
+    """Return False when untracked nutrients are missing from dict.
+
+    This tests the case where only tracked nutrients are in
+    new_nutrition dict (as would come from NutritionPanel which
+    only includes tracked nutrients). Untracked nutrients should
+    be ignored, not cause a spurious SCD2 version creation.
+    """
+    # new_nutrition is missing 'calories' which exists in base_item
+    new_nutrition = {
+        'units': 'oz',
+        'container_size': 250.0,
+        'serving_size': 40.0,
+        'total_fat_g': 8.0,
+        'saturated_fat_g': 2.0,
+        'sodium_mcg': 500000.0,
+        'total_carbs_g': 20.0,
+        'protein_g': 5.0,
+    }
+    # Note: 'calories' is NOT in new_nutrition (as if untracked)
+    assert should_create_new_version(base_item, new_nutrition) is False
