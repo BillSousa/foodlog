@@ -3,11 +3,28 @@ import tkinter as tk
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from foodlog.gui.windows.order_summary_window import OrderSummaryWindow
 from foodlog.models.dim_categories import Category
 from foodlog.models.dim_items import Item
 from foodlog.models.fact_order_lines import OrderLine
 from foodlog.models.fact_orders import Order
+
+
+@pytest.fixture
+def mock_orders_repo() -> MagicMock:
+    """Create a mock OrdersRepository with default Order."""
+    mock = MagicMock()
+    default_order = Order(
+        order_id=123,
+        delivery_charge=0.0,
+        tip=0.0,
+        tax=0.0,
+        order_level_coupon=0.0,
+    )
+    mock.return_value.get_order.return_value = default_order
+    return mock
 
 
 def test_order_summary_window_init() -> None:
@@ -283,7 +300,9 @@ def test_order_summary_window_uncategorized_items() -> None:
         root.destroy()
 
 
-def test_order_summary_window_csv_export_single_category() -> None:
+def test_order_summary_window_csv_export_single_category(
+    mock_orders_repo: MagicMock,
+) -> None:
     """Export order summary to CSV with single category."""
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = Path(tmpdir) / "test.csv"
@@ -298,6 +317,10 @@ def test_order_summary_window_csv_export_single_category() -> None:
             "foodlog.gui.windows.order_summary_window"
             ".CategoriesRepository"
         ) as MockCatRepo, patch(
+            "foodlog.gui.windows.order_summary_window"
+            ".OrdersRepository",
+            mock_orders_repo,
+        ), patch(
             "foodlog.gui.windows.order_summary_window"
             ".ProductNamesRepository"
         ) as MockNamesRepo, patch(
@@ -373,7 +396,9 @@ def test_order_summary_window_csv_export_single_category() -> None:
                 root.destroy()
 
 
-def test_order_summary_window_csv_export_multiple_categories() -> None:
+def test_order_summary_window_csv_export_multiple_categories(
+    mock_orders_repo: MagicMock,
+) -> None:
     """Export with multiple categories maintains grouping."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch(
@@ -386,6 +411,10 @@ def test_order_summary_window_csv_export_multiple_categories() -> None:
             "foodlog.gui.windows.order_summary_window"
             ".CategoriesRepository"
         ) as MockCatRepo, patch(
+            "foodlog.gui.windows.order_summary_window"
+            ".OrdersRepository",
+            mock_orders_repo,
+        ), patch(
             "foodlog.gui.windows.order_summary_window"
             ".ProductNamesRepository"
         ) as MockNamesRepo, patch(
@@ -466,7 +495,9 @@ def test_order_summary_window_csv_export_multiple_categories() -> None:
                 root.destroy()
 
 
-def test_order_summary_window_csv_export_missing_product_name() -> None:
+def test_order_summary_window_csv_export_missing_product_name(
+    mock_orders_repo: MagicMock,
+) -> None:
     """CSV export handles missing product names."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch(
@@ -479,6 +510,10 @@ def test_order_summary_window_csv_export_missing_product_name() -> None:
             "foodlog.gui.windows.order_summary_window"
             ".CategoriesRepository"
         ) as MockCatRepo, patch(
+            "foodlog.gui.windows.order_summary_window"
+            ".OrdersRepository",
+            mock_orders_repo,
+        ), patch(
             "foodlog.gui.windows.order_summary_window"
             ".ProductNamesRepository"
         ) as MockNamesRepo, patch(
@@ -526,7 +561,9 @@ def test_order_summary_window_csv_export_missing_product_name() -> None:
                 root.destroy()
 
 
-def test_order_summary_window_csv_export_error() -> None:
+def test_order_summary_window_csv_export_error(
+    mock_orders_repo: MagicMock,
+) -> None:
     """CSV export error shows error messagebox."""
     with patch(
         "foodlog.gui.windows.order_summary_window"
@@ -538,6 +575,10 @@ def test_order_summary_window_csv_export_error() -> None:
         "foodlog.gui.windows.order_summary_window"
         ".CategoriesRepository"
     ) as MockCatRepo, patch(
+        "foodlog.gui.windows.order_summary_window"
+        ".OrdersRepository",
+        mock_orders_repo,
+    ), patch(
         "foodlog.gui.windows.order_summary_window"
         ".ProductNamesRepository"
     ) as MockNamesRepo, patch(
