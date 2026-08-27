@@ -8,6 +8,7 @@ import pytest
 
 from foodlog.conversion.nutrition_converter import (
     convert_nutrition_for_storage,
+    convert_nutrition_for_display,
     get_column_name,
 )
 from foodlog.conversion.units import dv_percent_to_mcg
@@ -166,3 +167,96 @@ def test_percent_dv_never_stored_directly(test_db: Path) -> None:
         result = convert_nutrition_for_storage("Calcium", 25.0)
         assert result != 25.0
         assert result == 325000.0  # 25% of 1,300,000 mcg DV
+
+
+def test_mcg_to_mg_display_conversion(test_db: Path) -> None:
+    """Test that mcg-storage nutrients are converted to mg for display."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Sodium: stored in mcg, displayed in mg
+        result = convert_nutrition_for_display("Sodium", 1_000_000.0)
+        assert result == 1000.0
+
+        # Cholesterol: stored in mcg, displayed in mg
+        result = convert_nutrition_for_display("Cholesterol", 300_000.0)
+        assert result == 300.0
+
+
+def test_nutrients_without_conversion_displayed_as_stored(
+    test_db: Path,
+) -> None:
+    """Test that nutrients without unit conversion display as stored."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Calories (kcal, no conversion)
+        result = convert_nutrition_for_display("Calories", 150.0)
+        assert result == 150.0
+
+        # Total Fat (g, no conversion)
+        result = convert_nutrition_for_display("Total Fat", 10.0)
+        assert result == 10.0
+
+
+def test_dv_percent_nutrient_converts_from_mcg(test_db: Path) -> None:
+    """Test that %DV nutrients are converted from mcg to percent."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # Vitamin A: DV = 900 mcg, stored 450 mcg should display as 50%
+        result = convert_nutrition_for_display("Vitamin A", 450.0)
+        assert result == 50.0
+
+        # Vitamin D: DV = 20 mcg, stored 20 mcg should display as 100%
+        result = convert_nutrition_for_display("Vitamin D", 20.0)
+        assert result == 100.0
+
+        # Calcium: DV = 1300000 mcg, stored 325000 mcg should display as 25%
+        result = convert_nutrition_for_display("Calcium", 325000.0)
+        assert result == 25.0
+
+
+def test_dv_zero_mcg_returns_zero_percent(test_db: Path) -> None:
+    """Test that 0 mcg DV nutrients display as 0%."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        result = convert_nutrition_for_display("Vitamin A", 0.0)
+        assert result == 0.0
+
+
+def test_roundtrip_conversion_mass_nutrients(test_db: Path) -> None:
+    """Test that convert_for_storage and convert_for_display are inverses."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # For Sodium: mg -> mcg -> mg
+        original = 1500.0
+        stored = convert_nutrition_for_storage("Sodium", original)
+        displayed = convert_nutrition_for_display("Sodium", stored)
+        assert displayed == original
+
+        # For Cholesterol: mg -> mcg -> mg
+        original = 200.0
+        stored = convert_nutrition_for_storage("Cholesterol", original)
+        displayed = convert_nutrition_for_display("Cholesterol", stored)
+        assert displayed == original
+
+
+def test_roundtrip_conversion_dv_nutrients(test_db: Path) -> None:
+    """Test that convert_for_storage and convert_for_display are inverses."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        # For Vitamin A: % -> mcg -> %
+        original = 75.0
+        stored = convert_nutrition_for_storage("Vitamin A", original)
+        displayed = convert_nutrition_for_display("Vitamin A", stored)
+        assert abs(displayed - original) < 0.01  # Allow for rounding
+
+        # For Vitamin D: % -> mcg -> %
+        original = 50.0
+        stored = convert_nutrition_for_storage("Vitamin D", original)
+        displayed = convert_nutrition_for_display("Vitamin D", stored)
+        assert abs(displayed - original) < 0.01

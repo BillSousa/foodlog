@@ -1,3 +1,7 @@
+from foodlog.conversion.nutrition_converter import (
+    get_nutrient_name,
+    convert_nutrition_for_display,
+)
 from foodlog.models.dim_items import Item
 from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.product_names_repository import ProductNamesRepository
@@ -44,10 +48,14 @@ def populate_item_form_data(
         if category:
             category_name = category.category_name
 
-    nutrition_values = {
-        k: v for k, v in item.to_dict().items()
-        if k.endswith(("_g", "_mg", "_mcg"))
-    }
+    nutrition_values = {}
+    for col_name, value in item.to_dict().items():
+        nutrient_name = get_nutrient_name(col_name)
+        if nutrient_name:
+            display_value = convert_nutrition_for_display(
+                nutrient_name, value
+            )
+            nutrition_values[nutrient_name] = display_value
 
     return {
         'name_text': product_name.name_text,

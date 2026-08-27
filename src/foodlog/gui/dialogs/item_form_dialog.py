@@ -61,13 +61,14 @@ class ItemFormDialog(tk.Toplevel):
         self.category_var = tk.StringVar()
         cat_repo = CategoriesRepository()
         categories = [c.category_name for c in cat_repo.list_categories()]
-        cat_combo = tk.ttk.Combobox(
+        self.cat_combo = tk.ttk.Combobox(
             frame,
             textvariable=self.category_var,
             values=categories,
             width=37
         )
-        cat_combo.grid(row=1, column=1, sticky=tk.EW, pady=5)
+        self.cat_combo.grid(row=1, column=1, sticky=tk.EW, pady=5)
+        self.categories_list = categories
 
         tk.Label(frame, text="Price per block:").grid(
             row=2, column=0, sticky=tk.W, pady=5
@@ -150,6 +151,9 @@ class ItemFormDialog(tk.Toplevel):
 
         self.name_entry.insert(0, data['name_text'])
         self.category_var.set(data['category_name'])
+        if data['category_name'] in self.categories_list:
+            idx = self.categories_list.index(data['category_name'])
+            self.cat_combo.current(idx)
         self.price_entry.insert(0, data['price'])
         self.units_var.set(data['units'])
         self.container_entry.insert(0, data['container_size'])

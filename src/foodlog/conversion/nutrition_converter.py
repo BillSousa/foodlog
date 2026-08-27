@@ -1,6 +1,6 @@
 """Convert nutrition values from user input to stored format."""
 
-from foodlog.conversion.units import dv_percent_to_mcg
+from foodlog.conversion.units import dv_percent_to_mcg, mcg_to_dv_percent
 from foodlog.nutrients.metadata import (
     is_dv_percent_nutrient,
     get_nutrient_dv_amount,
@@ -94,6 +94,36 @@ def convert_nutrition_for_storage(
     return user_value
 
 
+def convert_nutrition_for_display(
+    nutrient_name: str, stored_value: float
+) -> float:
+    """
+    Convert nutrition value from storage format to user display format.
+
+    For %DV nutrients: stored as mcg, convert to percent using daily value.
+    For mass nutrients: if stored in "mcg" but entry unit is "mg", divide
+    by 1000.
+
+    Args:
+        nutrient_name: Name of the nutrient
+        stored_value: Value from dim_items
+
+    Returns:
+        Value to display to user
+    """
+    if is_dv_percent_nutrient(nutrient_name):
+        dv_amount = get_nutrient_dv_amount(nutrient_name)
+        if dv_amount is None or dv_amount == 0:
+            return 0.0
+        return mcg_to_dv_percent(stored_value, dv_amount)
+
+    entry_unit = get_nutrient_entry_unit(nutrient_name)
+    dim_items_unit = get_nutrient_dim_items_unit(nutrient_name)
+    if entry_unit == "mg" and dim_items_unit == "mcg":
+        return stored_value / 1000
+    return stored_value
+
+
 def get_column_name(nutrient_name: str) -> str | None:
     """
     Get the dim_items column name for a nutrient.
@@ -105,3 +135,19 @@ def get_column_name(nutrient_name: str) -> str | None:
         Column name in dim_items, or None if not found
     """
     return NUTRIENT_TO_COLUMN_MAP.get(nutrient_name)
+
+
+def get_nutrient_name(column_name: str) -> str | None:
+    """
+    Get the nutrient display name for a dim_items column.
+
+    Args:
+        column_name: Column name in dim_items
+
+    Returns:
+        Display name of the nutrient, or None if not found
+    """
+    for nutrient_name, col_name in NUTRIENT_TO_COLUMN_MAP.items():
+        if col_name == column_name:
+            return nutrient_name
+    return None

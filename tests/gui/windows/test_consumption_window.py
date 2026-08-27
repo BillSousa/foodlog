@@ -16,7 +16,9 @@ from foodlog.repository.consumption_repository import ConsumptionRepository
 from foodlog.repository.items_repository import ItemsRepository
 from foodlog.repository.orders_repository import OrdersRepository
 from foodlog.repository.order_lines_repository import OrderLinesRepository
+from foodlog.repository.product_names_repository import ProductNamesRepository
 from foodlog.calculations.on_hand import calculate_on_hand
+from foodlog.gui.helpers.item_filter import filter_items
 
 
 @pytest.fixture
@@ -289,4 +291,415 @@ def test_consumption_multiple_entries(test_db: Path) -> None:
         consumption_repo.log_consumption(consumption2)
         assert calculate_on_hand(item_id) == 15.0
 
+        conn.close()
+
+
+def test_consumption_window_validator_rejects_negative_on_hand(
+    test_db: Path,
+) -> None:
+    """Test that validate_consumption_on_hand rejects overconsumption."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        from foodlog.validation.constraints import (
+            validate_consumption_on_hand,
+            ValidationError,
+        )
+
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        items_repo = ItemsRepository()
+        orders_repo = OrdersRepository()
+        lines_repo = OrderLinesRepository()
+
+        item = Item(
+            name_id=1,
+            price=5.0,
+            servings_per_block=10.0,
+            units="units",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=100,
+            protein_g=5,
+            sodium_mcg=200,
+            choline_mcg=0,
+        )
+        item_id = items_repo.create_item(item)
+
+        order = Order(order_date="2024-01-01", is_delivery=False, status="planning")
+        order_id = orders_repo.create_order(order)
+
+        line = OrderLine(
+            order_id=order_id,
+            item_id=item_id,
+            servings_ordered=10.0,
+            actual_servings=10.0,
+            stated_price=5.0,
+            sale=0,
+            discount=0,
+            coupon=0,
+            net_price=50.0,
+        )
+        lines_repo.create_order_line(line)
+
+        # on_hand is 10.0
+        assert calculate_on_hand(item_id) == 10.0
+
+        # Consuming 10 should pass
+        assert validate_consumption_on_hand(item_id, 10.0) is True
+
+        # Consuming more than 10 should raise ValidationError
+        with pytest.raises(ValidationError):
+            validate_consumption_on_hand(item_id, 10.1)
+
+        conn.close()
+
+
+def test_consumption_window_validator_accepts_exact_on_hand(
+    test_db: Path,
+) -> None:
+    """Test that validator accepts consumption equal to on-hand."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        from foodlog.validation.constraints import validate_consumption_on_hand
+
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        items_repo = ItemsRepository()
+        orders_repo = OrdersRepository()
+        lines_repo = OrderLinesRepository()
+
+        item = Item(
+            name_id=1,
+            price=5.0,
+            servings_per_block=10.0,
+            units="units",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=100,
+            protein_g=5,
+            sodium_mcg=200,
+            choline_mcg=0,
+        )
+        item_id = items_repo.create_item(item)
+
+        order = Order(order_date="2024-01-01", is_delivery=False, status="planning")
+        order_id = orders_repo.create_order(order)
+
+        line = OrderLine(
+            order_id=order_id,
+            item_id=item_id,
+            servings_ordered=5.5,
+            actual_servings=5.5,
+            stated_price=5.0,
+            sale=0,
+            discount=0,
+            coupon=0,
+            net_price=27.5,
+        )
+        lines_repo.create_order_line(line)
+
+        # on_hand is 5.5, consuming exactly 5.5 should pass
+        assert calculate_on_hand(item_id) == 5.5
+        assert validate_consumption_on_hand(item_id, 5.5) is True
+
+        conn.close()
+
+
+def test_consumption_window_filter_by_search_text_no_match(
+    test_db: Path,
+) -> None:
+    """Test that filter_items excludes items not matching search text."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        items_repo = ItemsRepository()
+
+        item1 = Item(
+            name_id=1,
+            price=5.0,
+            servings_per_block=10.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=100,
+            protein_g=5,
+            sodium_mcg=200,
+            choline_mcg=0,
+        )
+        item1_id = items_repo.create_item(item1)
+
+        all_items = [items_repo.get_item(item1_id)]
+        product_names_repo = ProductNamesRepository()
+
+        search_substring = "nonexistent"
+        filtered = filter_items(all_items, search_substring, [], product_names_repo)
+
+        assert len(filtered) == 0
+
+        conn.close()
+
+
+def test_consumption_window_filter_by_category(test_db: Path) -> None:
+    """Test that filter_items filters by category ID."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        items_repo = ItemsRepository()
+        product_names_repo = ProductNamesRepository()
+
+        item1 = Item(
+            name_id=1,
+            category_id=1,
+            price=5.0,
+            servings_per_block=10.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=100,
+            protein_g=5,
+            sodium_mcg=200,
+            choline_mcg=0,
+        )
+        item1_id = items_repo.create_item(item1)
+
+        item2 = Item(
+            name_id=2,
+            category_id=2,
+            price=3.0,
+            servings_per_block=5.0,
+            units="g",
+            container_size=100,
+            serving_size=5,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=50,
+            protein_g=2,
+            sodium_mcg=100,
+            choline_mcg=0,
+        )
+        item2_id = items_repo.create_item(item2)
+
+        all_items = [
+            items_repo.get_item(item1_id),
+            items_repo.get_item(item2_id),
+        ]
+
+        filtered = filter_items(all_items, "", [1], product_names_repo)
+
+        assert len(filtered) == 1
+        assert filtered[0].item_id == item1_id
+
+        conn.close()
+
+
+def test_consumption_window_filter_search_and_category(
+    test_db: Path,
+) -> None:
+    """Test that filter_items applies search AND category together."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        items_repo = ItemsRepository()
+        product_names_repo = ProductNamesRepository()
+
+        item1 = Item(
+            name_id=1,
+            category_id=1,
+            price=5.0,
+            servings_per_block=10.0,
+            units="oz",
+            container_size=100,
+            serving_size=10,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=100,
+            protein_g=5,
+            sodium_mcg=200,
+            choline_mcg=0,
+        )
+        item1_id = items_repo.create_item(item1)
+
+        item2 = Item(
+            name_id=2,
+            category_id=2,
+            price=3.0,
+            servings_per_block=5.0,
+            units="g",
+            container_size=100,
+            serving_size=5,
+            blocks_must_be_integer=False,
+            active=True,
+            calories=50,
+            protein_g=2,
+            sodium_mcg=100,
+            choline_mcg=0,
+        )
+        item2_id = items_repo.create_item(item2)
+
+        all_items = [
+            items_repo.get_item(item1_id),
+            items_repo.get_item(item2_id),
+        ]
+
+        filtered = filter_items(
+            all_items,
+            "search_text",
+            [2],
+            product_names_repo,
+        )
+
+        assert len(filtered) == 0
+
+        conn.close()
+
+
+def test_consumption_window_date_entry_exists(
+    test_db: Path,
+) -> None:
+    """Test that date entry field is present in consumption window."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        import tkinter as tk
+        root = tk.Tk()
+
+        from foodlog.gui.windows.consumption_window import ConsumptionWindow
+        window = ConsumptionWindow(root)
+
+        # Find the date entry widget
+        date_entry = None
+        for widget in window.winfo_children():
+            for child in widget.winfo_children():
+                if isinstance(child, tk.Entry):
+                    date_entry = child
+                    break
+
+        # Verify date entry field exists
+        assert date_entry is not None
+
+        # Verify initial date is set to today
+        today_str = datetime.today().strftime("%Y-%m-%d")
+        assert date_entry.get() == today_str
+
+        window.destroy()
+        root.destroy()
+        conn.close()
+
+
+def test_consumption_window_date_entry_invalid_format(
+    test_db: Path,
+) -> None:
+    """Test that invalid date format triggers error message."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        import tkinter as tk
+        root = tk.Tk()
+
+        from foodlog.gui.windows.consumption_window import ConsumptionWindow
+        window = ConsumptionWindow(root)
+
+        # Find the date entry widget
+        date_entry = None
+        for widget in window.winfo_children():
+            for child in widget.winfo_children():
+                if isinstance(child, tk.Entry):
+                    date_entry = child
+                    break
+
+        assert date_entry is not None
+
+        original_date = window.entry_date
+
+        # Enter invalid date format
+        date_entry.delete(0, tk.END)
+        date_entry.insert(0, "invalid-date")
+
+        # Simulate FocusOut event
+        date_entry.event_generate('<FocusOut>')
+        window.update()
+
+        # entry_date should remain unchanged on invalid input
+        assert window.entry_date == original_date
+
+        window.destroy()
+        root.destroy()
+        conn.close()
+
+
+def test_consumption_window_date_entry_empty_input(
+    test_db: Path,
+) -> None:
+    """Test that empty date input is rejected."""
+    with patch(
+        "foodlog.database.connection.get_database_path", return_value=test_db
+    ):
+        conn = get_connection()
+        create_schema(conn)
+        seed_reference_data(conn)
+
+        import tkinter as tk
+        root = tk.Tk()
+
+        from foodlog.gui.windows.consumption_window import ConsumptionWindow
+        window = ConsumptionWindow(root)
+
+        # Find the date entry widget
+        date_entry = None
+        for widget in window.winfo_children():
+            for child in widget.winfo_children():
+                if isinstance(child, tk.Entry):
+                    date_entry = child
+                    break
+
+        assert date_entry is not None
+
+        original_date = window.entry_date
+
+        # Clear the date entry
+        date_entry.delete(0, tk.END)
+
+        # Simulate FocusOut event
+        date_entry.event_generate('<FocusOut>')
+        window.update()
+
+        # entry_date should remain unchanged on empty input
+        assert window.entry_date == original_date
+
+        window.destroy()
+        root.destroy()
         conn.close()
