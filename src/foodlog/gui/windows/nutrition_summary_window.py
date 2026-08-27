@@ -3,6 +3,7 @@ from datetime import datetime
 from tkinter import messagebox
 
 from foodlog.calculations.ratios import ratio1, ratio2
+from foodlog.conversion.nutrition_converter import get_column_name
 from foodlog.database.connection import get_database_path
 from foodlog.gui.helpers.csv_exporter import export_rows_to_csv
 from foodlog.gui.helpers.group_lines_by_category import (
@@ -33,16 +34,22 @@ class NutritionSummaryWindow(tk.Toplevel):
         title = tk.Label(
             self,
             text=f"Order #{self.order_id} — Nutrition Summary",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 24, "bold"),
         )
         title.pack(pady=10)
 
         canvas_frame = tk.Frame(self)
         canvas_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        canvas_frame.columnconfigure(0, weight=1)
+        canvas_frame.rowconfigure(0, weight=1)
+
         canvas = tk.Canvas(canvas_frame)
-        scrollbar = tk.Scrollbar(
+        v_scrollbar = tk.Scrollbar(
             canvas_frame, orient=tk.VERTICAL, command=canvas.yview
+        )
+        h_scrollbar = tk.Scrollbar(
+            canvas_frame, orient=tk.HORIZONTAL, command=canvas.xview
         )
         scrollable = tk.Frame(canvas)
 
@@ -52,7 +59,9 @@ class NutritionSummaryWindow(tk.Toplevel):
         )
 
         canvas.create_window((0, 0), window=scrollable, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.configure(
+            yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set
+        )
 
         lines_repo = OrderLinesRepository()
         items_repo = ItemsRepository()
@@ -66,7 +75,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             lines, items_repo, categories_repo
         )
 
-        header_cols = ["Item", "Servings"] + tracked_list + [
+        header_cols = ["Item", "Blocks", "Servings"] + tracked_list + [
             "Ratio1",
             "Ratio2",
         ]
@@ -80,7 +89,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             tk.Label(
                 scrollable,
                 text=category_key,
-                font=("Arial", 10, "bold"),
+                font=("Arial", 20, "bold"),
             ).pack(anchor=tk.W, padx=10, pady=(10, 5))
 
             category_totals = {nutrient: 0.0 for nutrient in tracked_list}
@@ -98,8 +107,12 @@ class NutritionSummaryWindow(tk.Toplevel):
 
                 nutrient_vals = {}
                 for nutrient in tracked_list:
-                    attr = f"{nutrient.lower().replace(' ', '_')}"
-                    val = getattr(item, attr, 0.0)
+                    column_name = get_column_name(nutrient)
+                    val = (
+                        getattr(item, column_name, 0.0)
+                        if column_name
+                        else 0.0
+                    )
                     computed = val * line.actual_servings
                     nutrient_vals[nutrient] = computed
                     category_totals[nutrient] += computed
@@ -108,12 +121,13 @@ class NutritionSummaryWindow(tk.Toplevel):
                 category_totals["cost"] += line.net_price
                 order_totals["cost"] += line.net_price
 
-                item_calories = nutrient_vals.get("calories", 0.0)
+                item_calories = nutrient_vals.get("Calories", 0.0)
                 item_cost = line.net_price
-                item_sodium = nutrient_vals.get("sodium", 0.0)
-                item_fat = nutrient_vals.get("total_fat", 0.0)
+                item_sodium_mcg = nutrient_vals.get("Sodium", 0.0)
+                item_sodium_mg = item_sodium_mcg / 1000.0
+                item_fat = nutrient_vals.get("Total Fat", 0.0)
                 item_ratio1 = (
-                    ratio1(item_calories, item_cost, item_sodium)
+                    ratio1(item_calories, item_cost, item_sodium_mg)
                     if item_cost > 0
                     else 0.0
                 )
@@ -121,15 +135,22 @@ class NutritionSummaryWindow(tk.Toplevel):
                     ratio2(
                         item_calories,
                         item_cost,
-                        item_sodium,
+                        item_sodium_mg,
                         item_fat,
                     )
                     if item_cost > 0
                     else 0.0
                 )
 
+                blocks = (
+                    line.actual_servings / item.servings_per_block
+                    if item.servings_per_block > 0
+                    else 0.0
+                )
+
                 row_data = [
                     f"  {name_text}",
+                    f"{blocks:.2f}",
                     f"{line.actual_servings:.1f}",
                 ]
                 for nutrient in tracked_list:
@@ -138,22 +159,23 @@ class NutritionSummaryWindow(tk.Toplevel):
 
                 self._build_table_row(scrollable, row_data)
 
-            cat_calories = category_totals.get("calories", 0.0)
+            cat_calories = category_totals.get("Calories", 0.0)
             cat_cost = category_totals["cost"]
-            cat_sodium = category_totals.get("sodium", 0.0)
-            cat_fat = category_totals.get("total_fat", 0.0)
+            cat_sodium_mcg = category_totals.get("Sodium", 0.0)
+            cat_sodium_mg = cat_sodium_mcg / 1000.0
+            cat_fat = category_totals.get("Total Fat", 0.0)
             cat_ratio1 = (
-                ratio1(cat_calories, cat_cost, cat_sodium)
+                ratio1(cat_calories, cat_cost, cat_sodium_mg)
                 if cat_cost > 0
                 else 0.0
             )
             cat_ratio2 = (
-                ratio2(cat_calories, cat_cost, cat_sodium, cat_fat)
+                ratio2(cat_calories, cat_cost, cat_sodium_mg, cat_fat)
                 if cat_cost > 0
                 else 0.0
             )
 
-            cat_data = ["  Subtotal", ""]
+            cat_data = ["  Subtotal", "", ""]
             for nutrient in tracked_list:
                 cat_data.append(f"{category_totals[nutrient]:.1f}")
             cat_data.extend([f"{cat_ratio1:.2f}", f"{cat_ratio2:.2f}"])
@@ -164,30 +186,32 @@ class NutritionSummaryWindow(tk.Toplevel):
 
         tk.Label(scrollable, text="", font=("Arial", 1)).pack()
 
-        ord_calories = order_totals.get("calories", 0.0)
+        ord_calories = order_totals.get("Calories", 0.0)
         ord_cost = order_totals["cost"]
-        ord_sodium = order_totals.get("sodium", 0.0)
-        ord_fat = order_totals.get("total_fat", 0.0)
+        ord_sodium_mcg = order_totals.get("Sodium", 0.0)
+        ord_sodium_mg = ord_sodium_mcg / 1000.0
+        ord_fat = order_totals.get("Total Fat", 0.0)
         ord_ratio1 = (
-            ratio1(ord_calories, ord_cost, ord_sodium)
+            ratio1(ord_calories, ord_cost, ord_sodium_mg)
             if ord_cost > 0
             else 0.0
         )
         ord_ratio2 = (
-            ratio2(ord_calories, ord_cost, ord_sodium, ord_fat)
+            ratio2(ord_calories, ord_cost, ord_sodium_mg, ord_fat)
             if ord_cost > 0
             else 0.0
         )
 
-        grand_data = ["GRAND TOTAL", ""]
+        grand_data = ["GRAND TOTAL", "", ""]
         for nutrient in tracked_list:
             grand_data.append(f"{order_totals[nutrient]:.1f}")
         grand_data.extend([f"{ord_ratio1:.2f}", f"{ord_ratio2:.2f}"])
 
         self._build_table_row(scrollable, grand_data, bold=True, pady=10)
 
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
+        h_scrollbar.grid(row=1, column=0, sticky="ew")
 
         btn_frame = tk.Frame(self)
         btn_frame.pack(fill=tk.X, padx=10, pady=10)
@@ -220,7 +244,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             label = tk.Label(
                 header_frame,
                 text=col,
-                font=("Courier", 8, "bold"),
+                font=("Courier", 16, "bold"),
                 width=col_widths[i],
                 anchor=tk.W if i == 0 else tk.E,
             )
@@ -253,7 +277,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             ["Item"] + ["Servings"] + ["Col"] * (len(row_data) - 2)
         )
 
-        font_style = ("Courier", 8, "bold") if bold else ("Courier", 8)
+        font_style = ("Courier", 16, "bold") if bold else ("Courier", 16)
 
         for i, val in enumerate(row_data):
             is_first = i == 0
@@ -310,6 +334,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             header = [
                 "Category",
                 "Item",
+                "Blocks",
                 "Servings",
             ] + tracked_list + ["Ratio1", "Ratio2"]
 
@@ -335,8 +360,12 @@ class NutritionSummaryWindow(tk.Toplevel):
 
                     nutrient_vals = {}
                     for nutrient in tracked_list:
-                        attr = f"{nutrient.lower().replace(' ', '_')}"
-                        val = getattr(item, attr, 0.0)
+                        column_name = get_column_name(nutrient)
+                        val = (
+                            getattr(item, column_name, 0.0)
+                            if column_name
+                            else 0.0
+                        )
                         computed = val * line.actual_servings
                         nutrient_vals[nutrient] = computed
                         category_totals[nutrient] += computed
@@ -345,12 +374,13 @@ class NutritionSummaryWindow(tk.Toplevel):
                     category_totals["cost"] += line.net_price
                     order_totals["cost"] += line.net_price
 
-                    item_calories = nutrient_vals.get("calories", 0.0)
+                    item_calories = nutrient_vals.get("Calories", 0.0)
                     item_cost = line.net_price
-                    item_sodium = nutrient_vals.get("sodium", 0.0)
-                    item_fat = nutrient_vals.get("total_fat", 0.0)
+                    item_sodium_mcg = nutrient_vals.get("Sodium", 0.0)
+                    item_sodium_mg = item_sodium_mcg / 1000.0
+                    item_fat = nutrient_vals.get("Total Fat", 0.0)
                     item_ratio1 = (
-                        ratio1(item_calories, item_cost, item_sodium)
+                        ratio1(item_calories, item_cost, item_sodium_mg)
                         if item_cost > 0
                         else 0.0
                     )
@@ -358,16 +388,23 @@ class NutritionSummaryWindow(tk.Toplevel):
                         ratio2(
                             item_calories,
                             item_cost,
-                            item_sodium,
+                            item_sodium_mg,
                             item_fat,
                         )
                         if item_cost > 0
                         else 0.0
                     )
 
+                    blocks = (
+                        line.actual_servings / item.servings_per_block
+                        if item.servings_per_block > 0
+                        else 0.0
+                    )
+
                     row = [
                         category_key,
                         name_text,
+                        f"{blocks:.2f}",
                         line.actual_servings,
                     ]
                     for nutrient in tracked_list:
@@ -375,17 +412,18 @@ class NutritionSummaryWindow(tk.Toplevel):
                     row.extend([item_ratio1, item_ratio2])
                     rows.append(row)
 
-                cat_calories = category_totals.get("calories", 0.0)
+                cat_calories = category_totals.get("Calories", 0.0)
                 cat_cost = category_totals["cost"]
-                cat_sodium = category_totals.get("sodium", 0.0)
-                cat_fat = category_totals.get("total_fat", 0.0)
+                cat_sodium_mcg = category_totals.get("Sodium", 0.0)
+                cat_sodium_mg = cat_sodium_mcg / 1000.0
+                cat_fat = category_totals.get("Total Fat", 0.0)
                 cat_ratio1 = (
-                    ratio1(cat_calories, cat_cost, cat_sodium)
+                    ratio1(cat_calories, cat_cost, cat_sodium_mg)
                     if cat_cost > 0
                     else 0.0
                 )
                 cat_ratio2 = (
-                    ratio2(cat_calories, cat_cost, cat_sodium, cat_fat)
+                    ratio2(cat_calories, cat_cost, cat_sodium_mg, cat_fat)
                     if cat_cost > 0
                     else 0.0
                 )
@@ -394,23 +432,25 @@ class NutritionSummaryWindow(tk.Toplevel):
                     category_key,
                     "Subtotal",
                     "",
+                    "",
                 ]
                 for nutrient in tracked_list:
                     cat_row.append(category_totals[nutrient])
                 cat_row.extend([cat_ratio1, cat_ratio2])
                 rows.append(cat_row)
 
-            ord_calories = order_totals.get("calories", 0.0)
+            ord_calories = order_totals.get("Calories", 0.0)
             ord_cost = order_totals["cost"]
-            ord_sodium = order_totals.get("sodium", 0.0)
-            ord_fat = order_totals.get("total_fat", 0.0)
+            ord_sodium_mcg = order_totals.get("Sodium", 0.0)
+            ord_sodium_mg = ord_sodium_mcg / 1000.0
+            ord_fat = order_totals.get("Total Fat", 0.0)
             ord_ratio1 = (
-                ratio1(ord_calories, ord_cost, ord_sodium)
+                ratio1(ord_calories, ord_cost, ord_sodium_mg)
                 if ord_cost > 0
                 else 0.0
             )
             ord_ratio2 = (
-                ratio2(ord_calories, ord_cost, ord_sodium, ord_fat)
+                ratio2(ord_calories, ord_cost, ord_sodium_mg, ord_fat)
                 if ord_cost > 0
                 else 0.0
             )
@@ -418,6 +458,7 @@ class NutritionSummaryWindow(tk.Toplevel):
             grand_row = [
                 "",
                 "GRAND TOTAL",
+                "",
                 "",
             ]
             for nutrient in tracked_list:

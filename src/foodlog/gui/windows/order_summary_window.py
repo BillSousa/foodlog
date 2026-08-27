@@ -31,7 +31,7 @@ class OrderSummaryWindow(tk.Toplevel):
         title = tk.Label(
             self,
             text=f"Order #{self.order_id} — Money Summary",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 24, "bold"),
         )
         title.pack(pady=10)
 
@@ -65,13 +65,48 @@ class OrderSummaryWindow(tk.Toplevel):
             lines, items_repo, categories_repo
         )
 
+        grid_frame = tk.Frame(scrollable)
+        grid_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        grid_frame.columnconfigure(0, minsize=240)
+        grid_frame.columnconfigure(1, minsize=120)
+        grid_frame.columnconfigure(2, minsize=120)
+        grid_frame.columnconfigure(3, minsize=120)
+        grid_frame.columnconfigure(4, minsize=100)
+        grid_frame.columnconfigure(5, minsize=100)
+        grid_frame.columnconfigure(6, minsize=100)
+        grid_frame.columnconfigure(7, minsize=120)
+
+        self.grid_row = 0
+
+        header_cols = [
+            "Item",
+            "Blocks",
+            "Servings",
+            "Stated Price",
+            "Sale",
+            "Discount",
+            "Coupon",
+            "Net Price",
+        ]
+        self._build_table_header(grid_frame, header_cols)
+
         subtotal = 0.0
         for category_key in grouped:
-            tk.Label(
-                scrollable,
+            cat_label = tk.Label(
+                grid_frame,
                 text=category_key,
-                font=("Arial", 10, "bold"),
-            ).pack(anchor=tk.W, padx=10, pady=(10, 5))
+                font=("Arial", 20, "bold"),
+                anchor=tk.W,
+            )
+            cat_label.grid(
+                row=self.grid_row,
+                column=0,
+                columnspan=5,
+                sticky="w",
+                pady=(10, 5),
+            )
+            self.grid_row += 1
 
             category_subtotal = 0.0
             for line, item in grouped[category_key]:
@@ -84,52 +119,110 @@ class OrderSummaryWindow(tk.Toplevel):
                     else f"Item #{item.item_id}"
                 )
 
-                text = (
-                    f"  {name_text} x{line.actual_servings:.1f}: "
-                    f"${line.stated_price:.2f} → "
-                    f"${line.net_price:.2f}"
+                blocks = (
+                    line.actual_servings / item.servings_per_block
+                    if item.servings_per_block > 0
+                    else 0.0
                 )
-                tk.Label(scrollable, text=text, justify=tk.LEFT).pack(
-                    anchor=tk.W, padx=10, pady=2
-                )
+                row_data = [
+                    name_text,
+                    f"{blocks:.2f}",
+                    f"{line.actual_servings:.1f}",
+                    f"${line.stated_price:.2f}",
+                    f"${line.sale:.2f}",
+                    f"${line.discount:.2f}",
+                    f"${line.coupon:.2f}",
+                    f"${line.net_price:.2f}",
+                ]
+                self._build_table_row(grid_frame, row_data)
 
                 category_subtotal += line.net_price
 
             subtotal += category_subtotal
-            tk.Label(
-                scrollable,
-                text=f"  Subtotal: ${category_subtotal:.2f}",
-                font=("Arial", 9, "bold"),
-            ).pack(anchor=tk.W, padx=10, pady=(0, 5))
+            cat_data = [
+                "Subtotal",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                f"${category_subtotal:.2f}",
+            ]
+            self._build_table_row(grid_frame, cat_data, bold=True, pady=5)
 
-        tk.Label(scrollable, text="", font=("Arial", 1)).pack()
+        self.grid_row += 1
 
-        tk.Label(
-            scrollable,
-            text=f"Subtotal: ${subtotal:.2f}",
-            font=("Arial", 10, "bold"),
-        ).pack(anchor=tk.W, padx=10, pady=5)
+        subtotal_label = tk.Label(
+            grid_frame,
+            text="Subtotal",
+            font=("Arial", 20, "bold"),
+            anchor=tk.W,
+        )
+        subtotal_label.grid(
+            row=self.grid_row,
+            column=0,
+            sticky="w",
+            padx=2,
+            pady=5,
+        )
+        subtotal_amount = tk.Label(
+            grid_frame,
+            text=f"${subtotal:.2f}",
+            font=("Arial", 20, "bold"),
+            anchor=tk.E,
+        )
+        subtotal_amount.grid(
+            row=self.grid_row,
+            column=7,
+            sticky="e",
+            padx=2,
+            pady=5,
+        )
+        self.grid_row += 1
 
         delivery = order.delivery_charge if order else 0.0
         tip = order.tip if order else 0.0
         tax = order.tax if order else 0.0
         coupon = order.order_level_coupon if order else 0.0
 
-        tk.Label(
-            scrollable,
-            text=(
-                f"Delivery: ${delivery:.2f}\nTip: ${tip:.2f}\n"
-                f"Tax: ${tax:.2f}\nCoupon: ${coupon:.2f}"
-            ),
-            justify=tk.LEFT,
-        ).pack(anchor=tk.W, padx=10, pady=5)
+        charges = [
+            ["Delivery", "", "", "", "", "", "", f"${delivery:.2f}"],
+            ["Tip", "", "", "", "", "", "", f"${tip:.2f}"],
+            ["Tax", "", "", "", "", "", "", f"${tax:.2f}"],
+            ["Coupon", "", "", "", "", "", "", f"${coupon:.2f}"],
+        ]
+        for charge_data in charges:
+            self._build_table_row(grid_frame, charge_data, pady=2)
 
         grand_total = subtotal + delivery + tip + tax + coupon
-        tk.Label(
-            scrollable,
-            text=f"TOTAL: ${grand_total:.2f}",
-            font=("Arial", 11, "bold"),
-        ).pack(anchor=tk.W, padx=10, pady=10)
+        total_label = tk.Label(
+            grid_frame,
+            text="TOTAL",
+            font=("Arial", 22, "bold"),
+            anchor=tk.W,
+        )
+        total_label.grid(
+            row=self.grid_row,
+            column=0,
+            sticky="w",
+            padx=2,
+            pady=10,
+        )
+        total_amount = tk.Label(
+            grid_frame,
+            text=f"${grand_total:.2f}",
+            font=("Arial", 22, "bold"),
+            anchor=tk.E,
+        )
+        total_amount.grid(
+            row=self.grid_row,
+            column=7,
+            sticky="e",
+            padx=2,
+            pady=10,
+        )
+        self.grid_row += 1
 
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -145,15 +238,84 @@ class OrderSummaryWindow(tk.Toplevel):
         close_btn = tk.Button(btn_frame, text="Close", command=self.destroy)
         close_btn.pack(side=tk.RIGHT, padx=5)
 
+    def _build_table_header(
+        self, parent: tk.Widget, columns: list[str]
+    ) -> None:
+        """Build table header with column names.
+
+        Parameters
+        ----------
+        parent : tk.Widget
+            Parent widget
+        columns : list[str]
+            Column header names
+        """
+        for i, col in enumerate(columns):
+            label = tk.Label(
+                parent,
+                text=col,
+                font=("Courier", 16, "bold"),
+                anchor=tk.W if i == 0 else tk.E,
+            )
+            label.grid(
+                row=self.grid_row,
+                column=i,
+                sticky="w" if i == 0 else "e",
+                padx=2,
+            )
+        self.grid_row += 1
+
+    def _build_table_row(
+        self,
+        parent: tk.Widget,
+        row_data: list[str],
+        bold: bool = False,
+        pady: int | tuple[int, int] = 2,
+    ) -> None:
+        """Build table row with aligned columns.
+
+        Parameters
+        ----------
+        parent : tk.Widget
+            Parent widget
+        row_data : list[str]
+            Column values
+        bold : bool
+            If True, use bold font
+        pady : int or tuple
+            Y padding
+        """
+        font_style = ("Courier", 16, "bold") if bold else ("Courier", 16)
+
+        for i, val in enumerate(row_data):
+            is_first = i == 0
+            label = tk.Label(
+                parent,
+                text=val,
+                font=font_style,
+                anchor=tk.W if is_first else tk.E,
+            )
+            label.grid(
+                row=self.grid_row,
+                column=i,
+                sticky="w" if is_first else "e",
+                padx=2,
+                pady=pady,
+            )
+        self.grid_row += 1
+
+
     def _export_csv(self) -> None:
         """Export order summary to CSV."""
         try:
             lines_repo = OrderLinesRepository()
             items_repo = ItemsRepository()
             categories_repo = CategoriesRepository()
+            orders_repo = OrdersRepository()
             product_names_repo = ProductNamesRepository()
 
             lines = lines_repo.get_order_lines(self.order_id)
+            order = orders_repo.get_order(self.order_id)
             grouped = group_lines_by_category(
                 lines, items_repo, categories_repo
             )
@@ -164,8 +326,8 @@ class OrderSummaryWindow(tk.Toplevel):
             )
 
             header = [
-                "Category",
                 "Item",
+                "Blocks",
                 "Servings",
                 "Stated Price",
                 "Sale",
@@ -174,7 +336,12 @@ class OrderSummaryWindow(tk.Toplevel):
                 "Net Price",
             ]
             rows = []
+            subtotal = 0.0
+
             for category_key in grouped:
+                rows.append([category_key, "", "", "", "", "", "", ""])
+                category_subtotal = 0.0
+
                 for line, item in grouped[category_key]:
                     product_name = product_names_repo.get_product_name(
                         item.name_id
@@ -184,18 +351,45 @@ class OrderSummaryWindow(tk.Toplevel):
                         if product_name
                         else f"Item #{item.item_id}"
                     )
+                    blocks = (
+                        line.actual_servings / item.servings_per_block
+                        if item.servings_per_block > 0
+                        else 0.0
+                    )
                     rows.append(
                         [
-                            category_key,
                             name_text,
-                            line.actual_servings,
-                            line.stated_price,
-                            line.sale,
-                            line.discount,
-                            line.coupon,
-                            line.net_price,
+                            f"{blocks:.2f}",
+                            f"{line.actual_servings:.1f}",
+                            f"${line.stated_price:.2f}",
+                            f"${line.sale:.2f}",
+                            f"${line.discount:.2f}",
+                            f"${line.coupon:.2f}",
+                            f"${line.net_price:.2f}",
                         ]
                     )
+                    category_subtotal += line.net_price
+
+                subtotal += category_subtotal
+                rows.append(
+                    ["Subtotal", "", "", "", "", "", "", f"${category_subtotal:.2f}"]
+                )
+
+            rows.append(["Subtotal", "", "", "", "", "", "", f"${subtotal:.2f}"])
+            rows.append(["", "", "", "", "", "", "", ""])
+
+            delivery = order.delivery_charge if order else 0.0
+            tip = order.tip if order else 0.0
+            tax = order.tax if order else 0.0
+            coupon = order.order_level_coupon if order else 0.0
+
+            rows.append(["Delivery", "", "", "", "", "", "", f"${delivery:.2f}"])
+            rows.append(["Tip", "", "", "", "", "", "", f"${tip:.2f}"])
+            rows.append(["Tax", "", "", "", "", "", "", f"${tax:.2f}"])
+            rows.append(["Coupon", "", "", "", "", "", "", f"${coupon:.2f}"])
+
+            grand_total = subtotal + delivery + tip + tax + coupon
+            rows.append(["TOTAL", "", "", "", "", "", "", f"${grand_total:.2f}"])
 
             export_rows_to_csv(csv_path, header, rows)
 

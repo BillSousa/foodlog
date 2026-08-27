@@ -32,8 +32,8 @@ def test_nutrition_summary_window_init() -> None:
 
             MockLinesRepo.return_value.get_order_lines.return_value = []
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockItemsRepo.return_value.get_item.return_value = None
             MockCatRepo.return_value.get_category.return_value = None
@@ -96,9 +96,9 @@ def test_nutrition_summary_window_single_category() -> None:
             MockItemsRepo.return_value.get_item.return_value = item1
             MockCatRepo.return_value.get_category.return_value = category
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
-                "sodium",
+                "Calories",
+                "Protein",
+                "Sodium",
             ]
             MockNamesRepo.return_value.get_product_name.return_value = (
                 product_name
@@ -191,8 +191,8 @@ def test_nutrition_summary_window_multiple_categories() -> None:
                 cat1 if id == 5 else cat2 if id == 6 else None
             )
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockNamesRepo.return_value.get_product_name.side_effect = (
                 lambda id: (
@@ -255,8 +255,8 @@ def test_nutrition_summary_window_uncategorized_items() -> None:
             MockItemsRepo.return_value.get_item.return_value = item1
             MockCatRepo.return_value.get_category.return_value = None
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockNamesRepo.return_value.get_product_name.return_value = (
                 product_name
@@ -325,8 +325,8 @@ def test_nutrition_summary_window_csv_export_single_category() -> None:
             MockItemsRepo.return_value.get_item.return_value = item1
             MockCatRepo.return_value.get_category.return_value = category
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockNamesRepo.return_value.get_product_name.return_value = (
                 product_name
@@ -346,16 +346,17 @@ def test_nutrition_summary_window_csv_export_single_category() -> None:
                 assert header_arg == [
                     "Category",
                     "Item",
+                    "Blocks",
                     "Servings",
-                    "calories",
-                    "protein",
+                    "Calories",
+                    "Protein",
                     "Ratio1",
                     "Ratio2",
                 ]
                 assert len(rows_arg) == 3
                 assert rows_arg[0][0] == "Produce"
                 assert rows_arg[0][1] == "Apples"
-                assert rows_arg[0][2] == 2.0
+                assert rows_arg[0][3] == 2.0
                 assert rows_arg[1][0] == "Produce"
                 assert rows_arg[1][1] == "Subtotal"
                 assert rows_arg[2][0] == ""
@@ -419,10 +420,10 @@ def test_nutrition_summary_window_csv_export_multiple_nutrients() -> None:
             product_name = MagicMock(name_text="Apples")
 
             tracked_nutrients = [
-                "calories",
-                "protein",
-                "sodium",
-                "total_fat",
+                "Calories",
+                "Protein",
+                "Sodium",
+                "Total Fat",
             ]
 
             MockLinesRepo.return_value.get_order_lines.return_value = [line1]
@@ -445,11 +446,12 @@ def test_nutrition_summary_window_csv_export_multiple_nutrients() -> None:
                 assert header_arg == [
                     "Category",
                     "Item",
+                    "Blocks",
                     "Servings",
-                    "calories",
-                    "protein",
-                    "sodium",
-                    "total_fat",
+                    "Calories",
+                    "Protein",
+                    "Sodium",
+                    "Total Fat",
                     "Ratio1",
                     "Ratio2",
                 ]
@@ -545,8 +547,8 @@ def test_nutrition_summary_window_csv_export_multiple_categories() -> None:
                 cat1 if id == 5 else cat2 if id == 6 else None
             )
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockNamesRepo.return_value.get_product_name.side_effect = (
                 lambda id: (
@@ -633,8 +635,8 @@ def test_nutrition_summary_window_csv_export_missing_product_name() -> None:
             MockItemsRepo.return_value.get_item.return_value = item1
             MockCatRepo.return_value.get_category.return_value = category
             MockTrackedRepo.return_value.get_tracked_nutrients.return_value = [
-                "calories",
-                "protein",
+                "Calories",
+                "Protein",
             ]
             MockNamesRepo.return_value.get_product_name.return_value = None
             MockDbPath.return_value = Path(tmpdir) / "foodlog.db"
