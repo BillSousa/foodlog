@@ -148,7 +148,7 @@ def test_populate_item_form_data_glycemic_index_none(
 def test_populate_item_form_data_nutrition_extraction(
     test_item: Item, mock_product_names_repo: MagicMock
 ) -> None:
-    """Test nutrition values are extracted correctly."""
+    """Test nutrition values are extracted and converted correctly."""
     mock_product_names_repo.get_product_name.return_value = ProductName(
         name_id=1, name_text="Test Item"
     )
@@ -156,17 +156,18 @@ def test_populate_item_form_data_nutrition_extraction(
     result = populate_item_form_data(test_item, mock_product_names_repo)
 
     nutrition = result["nutrition_values"]
-    assert nutrition["total_fat_g"] == 8.0
-    assert nutrition["saturated_fat_g"] == 2.0
-    assert nutrition["sodium_mcg"] == 500000.0
-    assert nutrition["total_carbs_g"] == 20.0
-    assert nutrition["protein_g"] == 5.0
+    assert nutrition["Total Fat"] == 8.0
+    assert nutrition["Saturated Fat"] == 2.0
+    # Sodium: stored as 500000 mcg, display as 500 mg
+    assert nutrition["Sodium"] == 500.0
+    assert nutrition["Total Carbohydrate"] == 20.0
+    assert nutrition["Protein"] == 5.0
 
 
 def test_populate_item_form_data_nutrition_only_ends_with_suffix(
     mock_product_names_repo: MagicMock,
 ) -> None:
-    """Test that only columns ending in _g, _mg, _mcg are extracted."""
+    """Test that only tracked nutrient columns are extracted."""
     item = Item(
         item_id=1,
         name_id=1,
@@ -199,8 +200,8 @@ def test_populate_item_form_data_nutrition_only_ends_with_suffix(
     assert "container_size" not in nutrition
     assert "active" not in nutrition
     assert "glycemic_index" not in nutrition
-    assert "calories" not in nutrition
-    assert "protein_g" in nutrition
+    assert "Calories" in nutrition
+    assert "Protein" in nutrition
 
 
 def test_populate_item_form_data_price_stringified(
@@ -363,3 +364,35 @@ def test_populate_item_form_data_empty_category_when_none(
     result = populate_item_form_data(item, mock_product_names_repo)
 
     assert result["category_name"] == ""
+
+
+def test_populate_item_form_data_mcg_to_mg_conversion(
+    mock_product_names_repo: MagicMock,
+) -> None:
+    """Test that mcg nutrients are converted to mg for display."""
+    item = Item(
+        item_id=1,
+        name_id=1,
+        category_id=None,
+        price=2.0,
+        servings_per_block=1.0,
+        units="g",
+        container_size=100.0,
+        serving_size=100.0,
+        blocks_must_be_integer=0,
+        active=1,
+        glycemic_index=None,
+        sodium_mcg=2500000.0,
+        cholesterol_mcg=300000.0,
+        choline_mcg=0.0,
+    )
+
+    mock_product_names_repo.get_product_name.return_value = ProductName(
+        name_id=1, name_text="Test"
+    )
+
+    result = populate_item_form_data(item, mock_product_names_repo)
+
+    nutrition = result["nutrition_values"]
+    assert nutrition["Sodium"] == 2500.0
+    assert nutrition["Cholesterol"] == 300.0

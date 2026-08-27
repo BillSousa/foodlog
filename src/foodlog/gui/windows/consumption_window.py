@@ -4,9 +4,16 @@ from tkinter import messagebox
 
 from foodlog.calculations.on_hand import calculate_on_hand
 from foodlog.gui.components.item_search_filter import ItemSearchFilter
+from foodlog.gui.helpers.item_filter import filter_items
 from foodlog.models.fact_consumption import Consumption
+from foodlog.repository.categories_repository import CategoriesRepository
 from foodlog.repository.consumption_repository import ConsumptionRepository
 from foodlog.repository.items_repository import ItemsRepository
+from foodlog.repository.product_names_repository import ProductNamesRepository
+from foodlog.validation.constraints import (
+    validate_consumption_on_hand,
+    ValidationError,
+)
 
 
 class ConsumptionWindow(tk.Toplevel):
@@ -43,6 +50,7 @@ class ConsumptionWindow(tk.Toplevel):
                 messagebox.showerror("Invalid date", "Use YYYY-MM-DD")
 
         date_entry.pack(side=tk.LEFT, padx=5)
+        date_entry.bind('<FocusOut>', on_date_change)
 
         self.search_filter = ItemSearchFilter(self)
         self.search_filter.get_frame().pack(fill=tk.X, padx=10, pady=10)
@@ -65,15 +73,34 @@ class ConsumptionWindow(tk.Toplevel):
         close_btn.pack(side=tk.RIGHT, padx=5)
 
     def _populate_items(self) -> None:
-        """Populate list of items with on-hand > 0."""
+        """Populate list of items with on-hand > 0, filtered by search."""
         for widget in self.items_container.winfo_children():
             widget.destroy()
 
         items_repo = ItemsRepository()
-        items = items_repo.list_active_items()
+        all_items = items_repo.list_active_items()
+
+        search_text = self.search_filter.get_search_text()
+        selected_cat_names = self.search_filter.get_selected_categories()
+
+        cat_repo = CategoriesRepository()
+        all_cats = cat_repo.list_categories()
+        cat_map = {c.category_name: c.category_id for c in all_cats}
+        selected_cat_ids = [
+            cat_map[name] for name in selected_cat_names
+            if name in cat_map
+        ]
+
+        product_names_repo = ProductNamesRepository()
+        filtered_items = filter_items(
+            all_items,
+            search_text,
+            selected_cat_ids,
+            product_names_repo,
+        )
 
         visible_count = 0
-        for item in items:
+        for item in filtered_items:
             on_hand = calculate_on_hand(item.item_id)
             if on_hand <= 0:
                 continue
@@ -93,7 +120,11 @@ class ConsumptionWindow(tk.Toplevel):
         row = tk.Frame(self.items_container, relief=tk.SUNKEN, borderwidth=1)
         row.pack(fill=tk.X, pady=2, padx=5)
 
-        tk.Label(row, text=item.units, width=30).pack(side=tk.LEFT, padx=5)
+        product_names_repo = ProductNamesRepository()
+        product_name = product_names_repo.get_product_name(item.name_id)
+        name_text = product_name.name_text if product_name else "Unknown"
+
+        tk.Label(row, text=name_text, width=30).pack(side=tk.LEFT, padx=5)
 
         tk.Label(row, text=f"On-hand: {on_hand:.2f}").pack(
             side=tk.LEFT, padx=10
@@ -126,13 +157,7 @@ class ConsumptionWindow(tk.Toplevel):
                     messagebox.showerror("Invalid", "Negative consumption")
                     return
 
-                on_hand = entry_data["on_hand"]
-                if consumed > on_hand:
-                    messagebox.showerror(
-                        "Negative on-hand",
-                        f"Cannot consume {consumed:.2f} when only {on_hand:.2f} on-hand"
-                    )
-                    return
+                validate_consumption_on_hand(item_id, consumed)
 
                 entry = Consumption(
                     item_id=item_id,
@@ -141,6 +166,9 @@ class ConsumptionWindow(tk.Toplevel):
                 )
                 consumption_repo.log_consumption(entry)
 
+            except ValidationError as e:
+                messagebox.showerror("Invalid consumption", str(e))
+                return
             except ValueError:
                 messagebox.showerror("Invalid value", f"Item {item_id}")
                 return
