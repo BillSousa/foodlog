@@ -372,8 +372,8 @@ def test_order_summary_window_csv_export_single_category(
 
                 assert "order_123_money_summary" in str(path_arg)
                 assert header_arg == [
-                    "Category",
                     "Item",
+                    "Blocks",
                     "Servings",
                     "Stated Price",
                     "Sale",
@@ -381,15 +381,44 @@ def test_order_summary_window_csv_export_single_category(
                     "Coupon",
                     "Net Price",
                 ]
-                assert len(rows_arg) == 1
-                assert rows_arg[0][0] == "Produce"
-                assert rows_arg[0][1] == "Apples"
-                assert rows_arg[0][2] == 1.5
-                assert rows_arg[0][3] == 10.00
-                assert rows_arg[0][4] == -1.00
-                assert rows_arg[0][5] == 0.0
-                assert rows_arg[0][6] == 0.0
-                assert rows_arg[0][7] == 9.00
+                # Expected structure:
+                # Row 0: ["Produce", "", "", "", "", "", "", ""]
+                # Row 1: ["Apples", "0.00", "1.5", "$10.00", "$-1.00", "$0.00", "$0.00", "$9.00"]
+                # Row 2: ["Subtotal", "", "", "", "", "", "", "$9.00"]
+                # Row 3: ["Subtotal", "", "", "", "", "", "", "$9.00"]
+                # Row 4: ["", "", "", "", "", "", "", ""]
+                # Row 5-8: Delivery, Tip, Tax, Coupon
+                # Row 9: TOTAL
+                assert len(rows_arg) == 10
+                assert rows_arg[0] == ["Produce", "", "", "", "", "", "", ""]
+                assert rows_arg[1][0] == "Apples"
+                assert rows_arg[1][1] == "0.00"
+                assert rows_arg[1][2] == "1.5"
+                assert rows_arg[1][3] == "$10.00"
+                assert rows_arg[1][4] == "$-1.00"
+                assert rows_arg[1][5] == "$0.00"
+                assert rows_arg[1][6] == "$0.00"
+                assert rows_arg[1][7] == "$9.00"
+                assert rows_arg[2] == [
+                    "Subtotal",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "$9.00",
+                ]
+                assert rows_arg[3] == [
+                    "Subtotal",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "$9.00",
+                ]
 
                 window.destroy()
             finally:
@@ -484,11 +513,22 @@ def test_order_summary_window_csv_export_multiple_categories(
                 MockExport.assert_called_once()
                 rows_arg = MockExport.call_args[0][2]
 
-                assert len(rows_arg) == 2
+                # Expected structure for 2 items in 2 categories:
+                # Row 0: ["Produce", "", "", "", "", "", "", ""]
+                # Row 1: ["Apples", "0.00", "1.0", "$5.00", "$0.00", "$0.00", "$0.00", "$5.00"]
+                # Row 2: ["Subtotal", "", "", "", "", "", "", "$5.00"]
+                # Row 3: ["Meat", "", "", "", "", "", "", ""]
+                # Row 4: ["Chicken", "0.00", "1.0", "$8.00", "$0.00", "$0.00", "$0.00", "$8.00"]
+                # Row 5: ["Subtotal", "", "", "", "", "", "", "$8.00"]
+                # Row 6: ["Subtotal", "", "", "", "", "", "", "$13.00"]
+                # Row 7: ["", "", "", "", "", "", "", ""]
+                # Row 8-11: Delivery, Tip, Tax, Coupon
+                # Row 12: TOTAL
+                assert len(rows_arg) == 13
                 assert rows_arg[0][0] == "Produce"
-                assert rows_arg[0][1] == "Apples"
-                assert rows_arg[1][0] == "Meat"
-                assert rows_arg[1][1] == "Chicken"
+                assert rows_arg[1][0] == "Apples"
+                assert rows_arg[3][0] == "Meat"
+                assert rows_arg[4][0] == "Chicken"
 
                 window.destroy()
             finally:
@@ -554,7 +594,8 @@ def test_order_summary_window_csv_export_missing_product_name(
                 window._export_csv()
 
                 rows_arg = MockExport.call_args[0][2]
-                assert rows_arg[0][1] == "Item #10"
+                # Row 1 should be the item row with the fallback name
+                assert rows_arg[1][0] == "Item #10"
 
                 window.destroy()
             finally:
