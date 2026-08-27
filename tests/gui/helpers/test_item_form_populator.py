@@ -22,7 +22,7 @@ def test_item() -> Item:
     return Item(
         item_id=1,
         name_id=1,
-        category_id=2,
+        category_id=None,
         price=5.50,
         servings_per_block=6.25,
         units="oz",
