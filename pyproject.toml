@@ -3,6 +3,9 @@ name = "foodlog"
 version = "0.1.0"
 description = "Track food purchases, nutrition, and consumption with SQLite"
 readme = "README.md"
+authors = [
+    { name = "Bill Sousa", email = "WKSJR99@msn.com" }
+]
 requires-python = ">=3.10"
 dependencies = []
 
