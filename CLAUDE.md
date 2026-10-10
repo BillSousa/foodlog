@@ -13,7 +13,7 @@ purchase and consumption data that enables them to track, analyze, and report
 on their nutrition profile and food costs.
 
 ## Claude API
-Model: claude-haiku-4-5-20251001 ONLY. Never upgrade to Sonnet, Opus, or Fable 
+Model: claude-haiku-5-5 ONLY. Never upgrade to Sonnet, Opus, or Fable 
 for ANY reason without explicit permission from the human.
 Do not waste the human's tokens.
 Only try to complete a task twice. If you cannot complete the task after 2 
@@ -57,7 +57,7 @@ root.
 should match the source file it tests (e.g. `src/foodlog/orders/create_order.py` → 
 `tests/orders/test_create_order.py`).
 - Create a test file with thorough tests for every py file that you create. 
-This means all functional script as wells supporting classes and functions.
+This means all functional script as well as supporting classes and functions.
 
 ## Environment
 - Package manager: `uv` with `pyproject.toml`.
