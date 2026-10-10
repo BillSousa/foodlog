@@ -1,0 +1,54 @@
+name: py3.15
+
+on:
+  push:
+    branches:
+      - main
+#  pull_request:
+#    branches:
+#      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON_PREFERENCE: only-system
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.15']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v9.0.0
+      with:
+        enable-cache: true
+
+    # Conditional step to install python3-tk on linux
+    # Need python3-tk on linux to run tkinter
+    - name: Install python3-tk on linux
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+    - name: Install dependencies with uv
+      run: uv sync
+
+    - name: Run tests on linux
+      if: matrix.os == 'ubuntu-latest'
+      run: xvfb-run -a uv run pytest tests/ --doctest-modules -v --maxfail=1 --disable-warnings
+      timeout-minutes: 120
+
+    - name: Run tests on windows
+      if: matrix.os == 'windows-latest'
+      run: uv run pytest tests/ --doctest-modules -v --maxfail=1 --disable-warnings
+      timeout-minutes: 120
