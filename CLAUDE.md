@@ -87,8 +87,8 @@ you are editing information, present both the original text and the edited
 text to the human.
 - If you have received approval from the human, create a backup copy of the 
 file to be edited before modifying the original file. Give the backup an 
-intuitive name, e.g., if the file is named "_validation", then call the 
-copy "_validation_backup".
+intuitive name, e.g., if the file is named "_validation.py", then call the 
+copy "_validation_backup.py".
 - Make the required edits to the original file, not the copy.
 - Inform the human that the changes are finished.
 Adherence to this policy is subject to the human's discretion. The human 
@@ -137,7 +137,7 @@ When presenting your changes, if you are deleting information, present what
 is being deleted. If you are adding information, present what you are adding. 
 If you are editing information, present both the original text and the edited 
 text to the human. If the human approves any or all of the changes, then 
-modify SPEC.md only with the approved changes.
+modify SPEC.md with only the approved changes.
 Causes to change SPEC.md --- If a design decision changes during development 
 (schema tweak, rejected approach, new rule discovered), 
 **update SPEC.md to reflect it** — If something gets tried and discarded, 
